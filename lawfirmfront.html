@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="stylesheet" href="lawfirmback.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lawfirm of Talampas Try</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #1c1c1c;
+      color: white;
+    }
+    .navbar {
+      background-color: #000;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 20px;
+    }
+    .navbar img.logo {
+      height: 50px;
+    }
+    .navbar nav {
+      display: flex;
+      gap: 20px;
+    }
+    .navbar nav a {
+      color: white;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    .search-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .search-container input {
+      padding: 5px;
+      border-radius: 4px;
+      border: none;
+    }
+    .search-container button {
+      padding: 5px 10px;
+      background-color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .user-profile {
+      background-color: white;
+      color: black;
+      padding: 5px 10px;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+    }
+    .main-content {
+      background-color: white;
+      color: black;
+      margin: 20px;
+      padding: 20px;
+      min-height: 300px;
+    }
+    .placeholder {
+      background-color: #d3d3d3;
+      height: 300px;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="navbar">
+    <img src="file:///D:/Website/lawfirmlogo.png" alt="Logo" class="logo" />
+    <nav>
+      <a href="#">My Cases</a>
+      <a href="#">Documents</a>
+      <a href="#">Messages</a>
+      <a href="#">Updates</a>
+      <a href="#">Contact</a>
+      <a href="#">About Us</a>
+    </nav>
+    <div class="search-container">
+      <input type="text" placeholder="Search" />
+      <button>Search</button>
+    </div>
+    <div class="user-profile">
+      <span id="user-name">User</span>
+    </div>
+  </div>
+
+  <div class="main-content">
+    <div class="placeholder"></div>
+    <!-- Future content goes here -->
+  </div>
+
+  <script>
+    document.querySelector(".search-container button").addEventListener("click", () => {
+      const query = document.querySelector(".search-container input").value;
+      console.log("Search for:", query);
+      alert("Searching for: " + query);
+    });
+
+    
+    const loggedInUserEmail = "jinsol@example.com"; 
+    const userDisplayName = loggedInUserEmail.split('@')[0];
+    document.getElementById("user-name").textContent = userDisplayName.charAt(0).toUpperCase() + userDisplayName.slice(1);
+  </script>
+</body>
+</html>
