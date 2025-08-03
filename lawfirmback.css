@@ -6,7 +6,7 @@
 
 body {
     font-family: Arial, sans-serif;
-    background-image: url('https://github.com/jigeumimari/Lawfirm_Web/blob/d83b40fa7d270a60a21b8653c44f99c961eb645d/lawbg.jpg'); 
+    background-image: url'https://github.com/jigeumimari/Lawfirm_Web/blob/d83b40fa7d270a60a21b8653c44f99c961eb645d/lawbg.jpg'; 
     background-size: cover;
     background-position: center;
     color: white;
@@ -73,5 +73,6 @@ p {
 .appointment-btn:hover {
     background-color: #3498db; /* Hover effect */
 }
+
 
 
