@@ -6,14 +6,14 @@
 
 body {
     font-family: Arial, sans-serif;
-    background-image: url('your-image-url.jpg'); /* Add the actual image URL */
+    background-image: url('your-image-url.jpg'); 
     background-size: cover;
     background-position: center;
     color: white;
 }
 
 header {
-    background-color: #9b59b6; /* Purple header color */
+    background-color: #9b59b6; 
     padding: 20px;
     display: flex;
     flex-direction: column;
@@ -45,7 +45,7 @@ main {
     text-align: center;
     margin-top: 50px;
     padding: 20px;
-    background-color: rgba(0, 0, 0, 0.7); /* Semi-transparent background */
+    background-color: rgba(0, 0, 0, 0.7); 
 }
 
 h1 {
@@ -61,7 +61,7 @@ p {
 }
 
 .appointment-btn {
-    background-color: #2980b9; /* Button color */
+    background-color: #2980b9; 
     color: white;
     padding: 10px 20px;
     border: none;
@@ -73,3 +73,4 @@ p {
 .appointment-btn:hover {
     background-color: #3498db; /* Hover effect */
 }
+
