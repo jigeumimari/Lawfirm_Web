@@ -1,112 +1,38 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <link rel="stylesheet" href="lawfirmback.css" />
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Lawfirm of Talampas Try</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background-color: #1c1c1c;
-      color: white;
-    }
-    .navbar {
-      background-color: #000;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 10px 20px;
-    }
-    .navbar img.logo {
-      height: 50px;
-    }
-    .navbar nav {
-      display: flex;
-      gap: 20px;
-    }
-    .navbar nav a {
-      color: white;
-      text-decoration: none;
-      font-weight: bold;
-    }
-    .search-container {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .search-container input {
-      padding: 5px;
-      border-radius: 4px;
-      border: none;
-    }
-    .search-container button {
-      padding: 5px 10px;
-      background-color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    .user-profile {
-      background-color: white;
-      color: black;
-      padding: 5px 10px;
-      border-radius: 20px;
-      display: flex;
-      align-items: center;
-    }
-    .main-content {
-      background-color: white;
-      color: black;
-      margin: 20px;
-      padding: 20px;
-      min-height: 300px;
-    }
-    .placeholder {
-      background-color: #d3d3d3;
-      height: 300px;
-      margin-bottom: 20px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+    <title>The Law Firm of Talamapas & Associates</title>
 </head>
 <body>
-
-  <div class="navbar">
-    <img src="https://raw.githubusercontent.com/jigeumimari/Lawfirm_Web/main/lawfirmlogo.png" alt="Logo" class="logo" />
-    <nav>
-      <a href="#">My Cases</a>
-      <a href="#">Documents</a>
-      <a href="#">Messages</a>
-      <a href="#">Updates</a>
-      <a href="#">Contact</a>
-      <a href="#">About Us</a>
-    </nav>
-    <div class="search-container">
-      <input type="text" placeholder="Search" />
-      <button>Search</button>
-    </div>
-    <div class="user-profile">
-      <span id="user-name">User</span>
-    </div>
-  </div>
-
-  <div class="main-content">
-    <div class="placeholder"></div>
-    <!-- Future content goes here -->
-  </div>
-
-  <script>
-    document.querySelector(".search-container button").addEventListener("click", () => {
-      const query = document.querySelector(".search-container input").value;
-      console.log("Search for:", query);
-      alert("Searching for: " + query);
-    });
-
-    
-    const loggedInUserEmail = "jinsol@example.com"; 
-    const userDisplayName = loggedInUserEmail.split('@')[0];
-    document.getElementById("user-name").textContent = userDisplayName.charAt(0).toUpperCase() + userDisplayName.slice(1);
-  </script>
+    <header>
+        <div class="contact-info">
+            <p>(123) 456 789</p>
+        </div>
+        <nav>
+            <ul>
+                <li><a href="#">HOME</a></li>
+                <li><a href="#">Check My Case Progress</a></li>
+                <li><a href="#">Messages</a></li>
+                <li><a href="#">My Cases</a></li>
+                <li><a href="#">About Us</a></li>
+                <li><a href="#">Location</a></li>
+                <li><a href="#">zhyzhy</a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <section class="hero">
+            <h1>Welcome To The Talamapas Law Firm and Associates</h1>
+            <p>A dedicated legal team committed to justice, integrity, and exceptional client service.</p>
+            <p>Providing expert legal counsel and representation to build a fairer, stronger community.</p>
+            <a class="appointment-button" href="#">Book an Appointment</a>
+        </section>
+    </main>
+    <footer>
+        <p>&copy; 2023 The Talamapas Law Firm. All Rights Reserved.</p>
+    </footer>
 </body>
 </html>
