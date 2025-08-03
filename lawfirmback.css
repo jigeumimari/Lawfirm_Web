@@ -1,3 +1,4 @@
+/* General Style Reset */
 * {
     margin: 0;
     padding: 0;
@@ -5,72 +6,101 @@
 }
 
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Arial', sans-serif;
+    background-color: #f9f9f9;
 }
 
+/* Header Styling */
 header {
-    background-color: #6A2C91; /* Purple header */
+    background-color: #9b59b6; /* Purple color */
     color: white;
+    padding: 20px;
+    text-align: center;
+}
+
+header h1 {
+    font-size: 2em;
+    margin-bottom: 10px;
+}
+
+.contact-info {
+    font-size: 1.2em;
+}
+
+/* Navigation Menu Styling */
+nav {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    background-color: #8e44ad;
     padding: 10px 20px;
-}
-
-.contact-info p {
-    margin: 0;
-}
-
-nav ul {
-    list-style: none;
-    display: flex;
-}
-
-nav ul li {
-    margin-left: 20px;
 }
 
 nav a {
     color: white;
     text-decoration: none;
+    margin: 0 15px;
+    font-weight: bold;
 }
 
-.hero {
-    background-image: url('your-image-url-here'); /* Replace with your image URL */
-    background-size: cover;
-    background-position: center;
-    color: white;
+nav a:hover {
+    text-decoration: underline;
+}
+
+/* Main Content Styling */
+.main-content {
+    padding: 40px;
     text-align: center;
-    padding: 100px 20px;
 }
 
-.hero h1 {
+.welcome-heading {
     font-size: 2.5em;
     margin-bottom: 20px;
+    color: #333;
 }
 
-.hero p {
+.sub-heading {
+    font-size: 1.2em;
+    color: #555;
     margin-bottom: 30px;
-    max-width: 600px;
-    margin-left: auto;
-    margin-right: auto;
 }
 
-.appointment-button {
-    background-color: #FF6F61; /* Button color */
+/* Button Styling */
+.button {
+    background-color: #2980b9; /* Blue color */
     color: white;
-    padding: 10px 30px;
-    text-decoration: none;
+    padding: 15px 30px;
+    text-align: center;
+    font-size: 1.2em;
+    border: none;
     border-radius: 5px;
+    cursor: pointer;
 }
 
-.appointment-button:hover {
-    background-color: #FF3B30; /* Hover effect */
+.button:hover {
+    background-color: #3498db; /* Hover effect */
 }
 
+/* Footer Styling */
 footer {
     text-align: center;
     padding: 20px;
-    background-color: #6A2C91; /* Purple footer */
+    background-color: #9b59b6; /* Same as header */
     color: white;
+    position: relative;
+}
+
+/* Responsive Media Queries */
+@media (max-width: 600px) {
+    .welcome-heading {
+        font-size: 2em;
+    }
+
+    .sub-heading {
+        font-size: 1em;
+    }
+
+    .button {
+        font-size: 1em;
+        padding: 10px 20px;
+    }
 }
