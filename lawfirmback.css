@@ -1,4 +1,3 @@
-/* General Style Reset */
 * {
     margin: 0;
     padding: 0;
@@ -6,101 +5,71 @@
 }
 
 body {
-    font-family: 'Arial', sans-serif;
-    background-color: #f9f9f9;
-}
-
-/* Header Styling */
-header {
-    background-color: #9b59b6; /* Purple color */
+    font-family: Arial, sans-serif;
+    background-image: url('your-image-url.jpg'); /* Add the actual image URL */
+    background-size: cover;
+    background-position: center;
     color: white;
-    padding: 20px;
-    text-align: center;
 }
 
-header h1 {
-    font-size: 2em;
+header {
+    background-color: #9b59b6; /* Purple header color */
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+}
+
+.contact-info p {
     margin-bottom: 10px;
 }
 
-.contact-info {
-    font-size: 1.2em;
+nav {
+    margin-top: 10px;
 }
 
-/* Navigation Menu Styling */
-nav {
+nav ul {
+    list-style: none;
     display: flex;
-    justify-content: space-between;
-    background-color: #8e44ad;
-    padding: 10px 20px;
+    gap: 20px;
 }
 
 nav a {
     color: white;
     text-decoration: none;
-    margin: 0 15px;
     font-weight: bold;
 }
 
-nav a:hover {
-    text-decoration: underline;
-}
-
-/* Main Content Styling */
-.main-content {
-    padding: 40px;
+main {
     text-align: center;
+    margin-top: 50px;
+    padding: 20px;
+    background-color: rgba(0, 0, 0, 0.7); /* Semi-transparent background */
 }
 
-.welcome-heading {
-    font-size: 2.5em;
+h1 {
+    font-size: 36px;
     margin-bottom: 20px;
-    color: #333;
 }
 
-.sub-heading {
-    font-size: 1.2em;
-    color: #555;
-    margin-bottom: 30px;
+p {
+    margin-bottom: 20px;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
-/* Button Styling */
-.button {
-    background-color: #2980b9; /* Blue color */
+.appointment-btn {
+    background-color: #2980b9; /* Button color */
     color: white;
-    padding: 15px 30px;
-    text-align: center;
-    font-size: 1.2em;
+    padding: 10px 20px;
     border: none;
     border-radius: 5px;
     cursor: pointer;
+    font-size: 16px;
 }
 
-.button:hover {
+.appointment-btn:hover {
     background-color: #3498db; /* Hover effect */
-}
-
-/* Footer Styling */
-footer {
-    text-align: center;
-    padding: 20px;
-    background-color: #9b59b6; /* Same as header */
-    color: white;
-    position: relative;
-}
-
-/* Responsive Media Queries */
-@media (max-width: 600px) {
-    .welcome-heading {
-        font-size: 2em;
-    }
-
-    .sub-heading {
-        font-size: 1em;
-    }
-
-    .button {
-        font-size: 1em;
-        padding: 10px 20px;
-    }
 }
