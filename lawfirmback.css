@@ -55,6 +55,7 @@ h1 {
 
 p {
     margin-bottom: 20px;
+    color: white;
     max-width: 600px;
     margin-left: auto;
     margin-right: auto;
@@ -73,6 +74,7 @@ p {
 .appointment-btn:hover {
     background-color: #3498db; /* Hover effect */
 }
+
 
 
 
