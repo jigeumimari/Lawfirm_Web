@@ -1,42 +1,411 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="lawfirmback.css">
-    <title>The Law Firm of Talamapas & Associates</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Talampas & Associates | Intake Workflow Edition</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" href="data:," />
+  <script defer src="script.js"></script>
 </head>
 <body>
-    <header>
-        <div class="contact-info">
-            <p>(123) 456 789</p>
+  <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+
+  <!-- ===================== LOGIN VIEW ===================== -->
+  <main id="loginView" class="view active">
+    <section class="auth-card" aria-labelledby="loginTitle">
+      <div class="brand">
+        <img class="logo" src="image/logo.png" alt="Talampas & Associates">
+        <div>
+          <h1 id="loginTitle">Talampas & Associates</h1>
+          <p class="subtitle">Case Management • Scheduling • Client Communication</p>
         </div>
-        <nav>
+      </div>
+
+      <form id="loginForm" class="form">
+        <label>
+          <span>Email</span>
+          <input type="email" id="email" autocomplete="username" required />
+        </label>
+        <label>
+          <span>Password</span>
+          <input type="password" id="password" autocomplete="current-password" required />
+        </label>
+        <button class="btn primary" type="submit">Log in</button>
+        <div class="hint">
+          <details>
+            <summary>Demo logins</summary>
             <ul>
-                <li><a href="#">Home</a></li>
-                <li><a href="#caseprogress.html">Check My Case Progress</a></li>
-                <li><a href="#">Messages</a></li>
-                <li><a href="#">My Cases</a></li>
-                <li><a href="#">About Us</a></li>
-                <li><a href="#">Location</a></li>
-                <li><a href="#">zhyzhy</a></li>
+              <li>Admin — <code>admin@talampas.com</code> / <code>admin123</code></li>
+              <li>Employee — <code>emp@talampas.com</code> / <code>emp123</code></li>
+              <li>Client — <code>client@talampas.com</code> / <code>client123</code></li>
             </ul>
-        </nav>
-    </header>
-    <main>
-        <section class="hero">
-            <h1>Welcome To The Talamapas Law Firm and Associates</h1>
-            <p>A dedicated legal team committed to justice, integrity, and exceptional client service.</p>
-            <p>Providing expert legal counsel and representation to build a fairer, stronger community.</p>
-            <a class="appointment-button" href="#">Book an Appointment</a>
-        </section>
-    </main>
-    <footer>
-        <p>&copy; 2023 The Talamapas Law Firm. All Rights Reserved.</p>
-    </footer>
+          </details>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <!-- ===================== (after login) ===================== -->
+  <div id="appShell" class="app-shell hidden">
+    <aside class="sidebar" aria-label="Primary">
+      <div class="sidebar-header">
+        <img class="logo small" src="image/logo.png" alt="TA">
+        <div>
+          <div class="firm">Talampas & Associates</div>
+          <div id="roleBadge" class="role-badge">Role</div>
+        </div>
+      </div>
+      <nav>
+        <button class="nav-btn" data-route="dashboard"><span>Dashboard</span></button>
+        <button class="nav-btn" data-route="cases"><span>Cases</span></button>
+        <button class="nav-btn" data-route="calendar"><span>Scheduling</span></button>
+        <button class="nav-btn" data-route="messages"><span>Messages</span></button>
+        <button class="nav-btn only-admin" data-route="users"><span>Users</span></button>
+        <button class="nav-btn only-client" data-route="appointments"><span>Book Appointment</span></button>
+      </nav>
+      <div class="sidebar-footer">
+        <button id="logoutBtn" class="btn ghost">Log out</button>
+      </div>
+    </aside>
+
+    <section class="content" aria-live="polite">
+      <header class="topbar">
+        <div class="search">
+          <input id="globalSearch" type="search" placeholder="Search cases, clients, schedule…" aria-label="Global search" />
+          <button class="btn" id="searchBtn">Search</button>
+        </div>
+        <div class="account">
+          <span id="currentUserName">—</span>
+          <span class="dot"></span>
+        </div>
+      </header>
+
+      <!-- ===================== ROUTE: Dashboard ===================== -->
+      <div id="route-dashboard" class="route active" data-title="Dashboard">
+        <div class="grid grid-3">
+          <div class="card"><h3>Total Open Cases</h3><div class="metric" id="metricOpenCases">—</div></div>
+          <div class="card"><h3>Upcoming Events (7d)</h3><div class="metric" id="metricUpcoming">—</div></div>
+          <div class="card"><h3>Unread Messages</h3><div class="metric" id="metricUnread">—</div></div>
+        </div>
+
+        <div id="clientProgressCard" class="card hidden">
+          <h3>My Case Progress</h3>
+          <div id="clientProgressList" class="progress-list"></div>
+        </div>
+
+        <div class="card">
+          <h3>Recent Activity</h3>
+          <ul id="activityFeed" class="feed"></ul>
+        </div>
+      </div>
+
+      <!-- ===================== ROUTE: Cases ===================== -->
+      <div id="route-cases" class="route" data-title="Cases">
+        <div class="toolbar">
+          <div class="left">
+            <button class="btn primary" id="newCaseBtn">New Case</button>
+            <button class="btn ghost" id="exportDataBtn">Export JSON</button>
+            <input type="file" id="importDataInput" accept="application/json" hidden />
+            <button class="btn ghost" id="importDataBtn">Import JSON</button>
+          </div>
+          <div class="right"><input type="search" id="caseSearch" placeholder="Search cases" /></div>
+        </div>
+        <div class="card">
+          <table class="table" id="caseTable" aria-label="Cases table">
+            <thead>
+              <tr>
+                <th>Case #</th>
+                <th>Client</th>
+                <th>Case Type</th>
+                <th>Status</th>
+                <th>Next Date</th>
+                <th>Assigned To</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===================== ROUTE: Calendar ===================== -->
+      <div id="route-calendar" class="route" data-title="Scheduling">
+        <div class="card">
+          <div class="calendar-controls">
+            <button class="btn" id="prevMonthBtn">◀</button>
+            <h3 id="calendarTitle" title="Click to jump to a month">—</h3>
+            <button class="btn" id="nextMonthBtn">▶</button>
+            <button class="btn primary only-admin only-employee" id="newEventBtn">Add Event</button>
+          </div>
+          <div id="calendarGrid" class="calendar-grid" role="grid" aria-label="Monthly calendar"></div>
+        </div>
+      </div>
+
+      <!-- ===================== ROUTE: Messages ===================== -->
+      <div id="route-messages" class="route" data-title="Messages">
+        <div class="grid grid-2">
+          <div class="card">
+            <div class="toolbar">
+              <div class="left"><h3>Conversations</h3></div>
+              <div class="right"><button class="btn primary" id="newThreadBtn">New Thread</button></div>
+            </div>
+            <ul id="threadList" class="threads" role="listbox" aria-label="Thread list"></ul>
+          </div>
+          <div class="card">
+            <div class="message-head"><h3 id="threadTitle">Select a conversation</h3></div>
+            <div id="messagePane" class="messages" aria-live="polite"></div>
+            <form id="messageForm" class="message-form" autocomplete="off">
+              <input id="messageInput" placeholder="Type a message…" />
+              <button class="btn primary" type="submit">Send</button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================== ROUTE: Users ===================== -->
+      <div id="route-users" class="route" data-title="Users">
+        <div class="card">
+          <div class="toolbar">
+            <div class="left"><h3>Manage Users</h3></div>
+            <div class="right"><button class="btn primary" id="newUserBtn">New User</button></div>
+          </div>
+          <table class="table" id="userTable" aria-label="Users">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===================== Appointments (Client) ===================== -->
+      <div id="route-appointments" class="route" data-title="Book Appointment">
+        <div class="card">
+          <h3>Book an Appointment</h3>
+          <form id="appointmentForm" class="form" autocomplete="off">
+            <div class="grid grid-2">
+              <label><span>Preferred Date</span><input type="date" id="apptDate" required /></label>
+              <label><span>Preferred Time</span><input type="time" id="apptTime" required /></label>
+            </div>
+
+            <!-- Phone: Country + local number PH -->
+            <div class="grid grid-2">
+              <label>
+                <span>Country</span>
+                <select id="phoneCountry">
+                  <option value="+63" selected>Philippines (+63)</option>
+                </select>
+              </label>
+
+              <label>
+                <span>Phone Number</span>
+                <div class="phone-wrap">
+                  <span id="phonePrefix" class="phone-prefix">+63</span>
+                  <input
+                    type="tel"
+                    id="phoneLocal"
+                    name="phoneLocal"
+                    placeholder="___________"
+                    inputmode="numeric"
+                    maxlength="11"
+                    required
+                  />
+                </div>
+                <small class="hint">Enter exactly 11 digits after the +63.</small>
+              </label>
+            </div>
+
+            <!-- Appointment type -->
+            <label>
+              <span>Appointment Type</span>
+              <select id="appointmentType" name="appointmentType" required>
+                <option value="">Select Appointment Type</option>
+                <option value="In-Office">In-Office</option>
+                <option value="Online Meet">Online Meet</option>
+                <option value="Phone Call">Phone Call</option>
+              </select>
+            </label>
+
+            <label>
+              <span>Case Type</span>
+              <select id="apptPractice" required>
+                <option value="Family Law">Family Law</option>
+                <option value="Criminal Case">Criminal Case</option>
+                <option value="Insurance Law">Insurance Law</option>
+                <option value="Labor & Employment">Labor & Employment</option>
+                <option value="Immigration">Immigration</option>
+                <option value="Others">Others</option>
+              </select>
+            </label>
+
+            <label><span>Notes</span><textarea id="apptNotes" rows="3" placeholder="Briefly describe your concern…"></textarea></label>
+
+            <div class="consent">
+              <label class="checkbox"><input type="checkbox" id="apptConsent" required /> I agree to the terms and privacy policy.</label>
+            </div>
+
+            <div class="actions right"><button class="btn primary" type="submit">Submit Request</button></div>
+          </form>
+        </div>
+      </div>
+
+      <!-- ===================== DIALOGS ===================== -->
+
+      <!-- Case dialog -->
+      <dialog id="caseDialog" class="dialog">
+        <form id="caseForm" method="dialog" class="form">
+          <h3 id="caseDialogTitle">New Case</h3>
+          <div class="grid grid-2">
+            <label><span>Client Name</span><input id="caseClient" required /></label>
+            <label><span>Case Type</span>
+              <select id="casePractice" required>
+                <option>Family Law</option>
+                <option>Criminal Case</option>
+                <option>Insurance Law</option>
+                <option>Labor & Employment</option>
+                <option>Immigration</option>
+                <option>Others</option>
+              </select>
+            </label>
+          </div>
+          <div class="grid grid-2">
+            <label><span>Status</span>
+              <select id="caseStatus" required>
+                <option>Pending Review</option>
+                <option>Open</option>
+                <option>On Hold</option>
+                <option>Closed</option>
+              </select>
+            </label>
+            <label><span>Next Date</span><input type="date" id="caseNextDate" /></label>
+          </div>
+
+          <label><span>Assigned To (email)</span><input id="caseAssignee" placeholder="emp@talampas.com" /></label>
+
+          <div class="progress-edit">
+            <span>Progress</span>
+            <div id="caseProgressButtons" class="btn-group">
+              <button type="button" class="btn toggle" data-p="0">0%</button>
+              <button type="button" class="btn toggle" data-p="25">25%</button>
+              <button type="button" class="btn toggle" data-p="50">50%</button>
+              <button type="button" class="btn toggle" data-p="75">75%</button>
+              <button type="button" class="btn toggle" data-p="100">100%</button>
+            </div>
+            <small id="caseProgressLabel">0%</small>
+          </div>
+
+          <label><span>Notes</span><textarea id="caseNotes" rows="3"></textarea></label>
+
+          <label><span>Attachments (optional)</span>
+            <input id="caseFiles" type="file" multiple accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.heic,.txt" />
+          </label>
+          <ul id="caseFileList"></ul>
+
+          <div id="clientCaseNote" class="note hidden">
+            This case will be sent to <strong>Admin</strong> for review and assignment to the appropriate employee/para-legal.
+          </div>
+
+          <div class="actions">
+            <button type="button" id="cancelCaseBtn" class="btn ghost">Cancel</button>
+            <button type="submit" class="btn primary">Save</button>
+          </div>
+        </form>
+      </dialog>
+
+      <!-- Event dialog -->
+      <dialog id="eventDialog" class="dialog">
+        <form id="eventForm" method="dialog" class="form">
+          <h3 id="eventDialogTitle">Add Event</h3>
+          <div class="grid grid-2">
+            <label><span>Title</span><input id="eventTitle" required /></label>
+            <label><span>Date</span><input type="date" id="eventDate" required /></label>
+          </div>
+          <div class="grid grid-2">
+            <label><span>Time</span><input type="time" id="eventTime" required /></label>
+            <label><span>Related Case # (optional)</span><input id="eventCaseId" /></label>
+          </div>
+          <label><span>Notes</span><textarea id="eventNotes" rows="3"></textarea></label>
+          <div class="actions">
+            <button type="button" id="deleteEventBtn" class="btn danger hidden">Delete</button>
+            <button type="button" id="cancelEventBtn" class="btn ghost">Cancel</button>
+            <button type="submit" class="btn primary">Save</button>
+          </div>
+        </form>
+      </dialog>
+
+      <!-- Month/Year picker -->
+      <dialog id="monthPicker" class="dialog">
+        <form class="form" method="dialog">
+          <h3>Jump to Month</h3>
+          <div class="grid grid-2">
+            <label>
+              <span>Month</span>
+              <select id="mpMonth">
+                <option value="0">January</option><option value="1">February</option>
+                <option value="2">March</option><option value="3">April</option>
+                <option value="4">May</option><option value="5">June</option>
+                <option value="6">July</option><option value="7">August</option>
+                <option value="8">September</option><option value="9">October</option>
+                <option value="10">November</option><option value="11">December</option>
+              </select>
+            </label>
+            <label>
+              <span>Year</span>
+              <input id="mpYear" type="number" min="1900" max="2100" required />
+            </label>
+          </div>
+          <div class="actions">
+            <button class="btn ghost" value="cancel">Cancel</button>
+            <button id="mpGo" class="btn primary" value="submit">Go</button>
+          </div>
+        </form>
+      </dialog>
+
+      <!-- User dialog -->
+      <dialog id="userDialog" class="dialog">
+        <form id="userForm" method="dialog" class="form">
+          <h3 id="userDialogTitle">New User</h3>
+          <div class="grid grid-2">
+            <label><span>Full Name</span><input id="userName" required /></label>
+            <label><span>Email</span><input id="userEmail" type="email" required /></label>
+          </div>
+          <div class="grid grid-2">
+            <label><span>Role</span>
+              <select id="userRole" required>
+                <option value="admin">Admin</option>
+                <option value="employee">Employee</option>
+                <option value="client">Client</option>
+              </select>
+            </label>
+            <label><span>Temp Password</span><input id="userPassword" required /></label>
+          </div>
+
+          <!-- assignment case -->
+          <label><span>Assign Case (optional)</span>
+            <select id="assignCaseForUser">
+              <option value="">— No immediate assignment —</option>
+            </select>
+          </label>
+
+          <div class="actions">
+            <button type="button" class="btn ghost" id="cancelUserBtn">Cancel</button>
+            <button class="btn primary" value="submit">Save</button>
+          </div>
+        </form>
+      </dialog>
+    </section>
+  </div>
 </body>
 </html>
-
-
-
-
