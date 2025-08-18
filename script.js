@@ -1,12 +1,46 @@
 /* ==========================================================
    script.js – Talampas & Associates (Intake Workflow Edition)
-   Front-end only (localStorage)
+   Hybrid front-end:
+     - Uses PHP API (/api/*.php) when available
+     - Falls back to localStorage (your current behavior)
    ========================================================== */
 
 /* ---------- DOM helpers ---------- */
 const q  = (sel, ctx=document) => ctx.querySelector(sel);
 const qa = (sel, ctx=document) => Array.from(ctx.querySelectorAll(sel));
 const fmt = (d) => new Date(d).toLocaleDateString(undefined, {year:'numeric', month:'short', day:'2-digit'});
+
+/* ---------- Backend API helpers (hybrid) ---------- */
+const API_BASE = 'api/'; // index.html + /api folder sibling
+
+async function apiFetch(path, options = {}) {
+  try {
+    const res = await fetch(API_BASE + path, {
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json', ...(options.headers||{}) },
+      ...options
+    });
+    const data = await res.json().catch(()=> ({}));
+    if (!res.ok) throw Object.assign(new Error(data.error || 'API error'), { status: res.status, data });
+    return data;
+  } catch (err) {
+    err._offline = true; // used to detect when to fallback to localStorage
+    throw err;
+  }
+}
+
+const API = {
+  login: (email, password) => apiFetch('login.php', { method: 'POST', body: JSON.stringify({ email, password }) }),
+  logout: () => apiFetch('logout.php', { method: 'POST' }),
+  me: () => apiFetch('me.php'),
+  casesList: () => apiFetch('cases.php'),
+  apptCreate: (payload) => apiFetch('appointments.php', { method: 'POST', body: JSON.stringify(payload) }),
+  eventsList: (from, to) => apiFetch(`events.php?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`),
+  eventCreate: (payload) => apiFetch('events.php', { method: 'POST', body: JSON.stringify(payload) }),
+  threadsList: () => apiFetch('threads.php'),
+  messagesList: (thread_id) => apiFetch(`messages.php?thread_id=${encodeURIComponent(thread_id)}`),
+  messageSend: (payload) => apiFetch('messages.php', { method: 'POST', body: JSON.stringify(payload) }),
+};
 
 /* ---------- Storage keys ---------- */
 const DB_KEY = 'ta_db_v2_intake';
@@ -16,9 +50,9 @@ const SESSION_KEY = 'ta_session_v2';
 function addDays(d, n=0){ const x = new Date(d); x.setDate(x.getDate()+n); return x.toISOString(); }
 const DEFAULT_DB = {
   users: [
-    { id:'u1', name:'A. Administrator', email:'admin@talampas.com', role:'admin',    password:'admin123', active:true },
-    { id:'u2', name:'E. Employee',      email:'emp@talampas.com',   role:'employee', password:'emp123',   active:true },
-    { id:'u3', name:'C. Client',        email:'client@talampas.com',role:'client',   password:'client123',active:true },
+    { id:'u1', name:'A. Administrator', email:'admin@talampas.com',  role:'admin',    password:'admin123',  active:true },
+    { id:'u2', name:'E. Employee',      email:'emp@talampas.com',    role:'employee', password:'emp123',    active:true },
+    { id:'u3', name:'C. Client',        email:'client@talampas.com', role:'client',   password:'client123', active:true },
   ],
   cases: [
     { id:'C-2001', client:'C. Client', clientEmail:'client@talampas.com', practice:'Family Law',
@@ -134,10 +168,26 @@ function enterApp(user){
   Users.renderTable();
   Appointments.renderTable();
 }
-function onLogin(e){
+
+/* HYBRID LOGIN */
+async function onLogin(e){
   e.preventDefault();
   const email = q('#email').value.trim().toLowerCase();
   const password = q('#password').value;
+
+  // Try backend first
+  try {
+    const { user } = await API.login(email, password);
+    const normalized = { id: user.id, name: user.name, email: user.email, role: user.role, active: true };
+    setSession(normalized);
+    enterApp(normalized);
+    showToast(`Welcome back, ${normalized.name.split(' ')[0]}!`);
+    return;
+  } catch (err) {
+    if (!err._offline) { showToast(err.message || 'Login failed'); return; }
+  }
+
+  // Fallback to localStorage auth
   const db = loadDB();
   const user = db.users.find(u => u.email===email && u.password===password && u.active);
   if(!user){ showToast('Invalid credentials or inactive account.'); return; }
@@ -146,13 +196,16 @@ function onLogin(e){
   enterApp(user);
   showToast(`Welcome back, ${user.name.split(' ')[0]}!`);
 }
-function onLogout(){
+
+async function onLogout(){
+  try { await API.logout(); } catch(_) { /* ignore */ }
   const me = getSession();
   if(me) pushActivity(`${me.email} logged out.`);
   clearSession();
   showLogin();
   showToast('Logged out.');
 }
+
 function routeTo(name){
   qa('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.route===name));
   qa('.route').forEach(r => r.classList.remove('active'));
@@ -319,6 +372,7 @@ const Cases = {
   },
 
   async saveFromDialog(){
+    // Local-only for now (keeps your existing flow).
     const dlg = q('#caseDialog');
     const db = loadDB();
     const me = getSession();
@@ -371,21 +425,37 @@ const Cases = {
     Calendar.render();
   },
 
-  renderTable(){
-    const db = loadDB();
+  async renderTable(){
     const tbody = q('#caseTable tbody');
     if(!tbody) return;
-    const role = getSession()?.role;
     const me = getSession();
+    const role = me?.role;
     const search = (q('#caseSearch')?.value||'').toLowerCase();
 
-    tbody.innerHTML = '';
-    let items = db.cases;
+    let items = [];
 
-    if(role==='client'){
-      items = items.filter(c => c.clientEmail === me.email);
-    } else if(role==='employee'){
-      items = items.filter(c => c.assignee === me.email);
+    // Try backend first
+    try {
+      const data = await API.casesList();
+      items = (data.cases || []).map(c => ({
+        id: c.case_number || String(c.id),
+        client: c.client_name || '',
+        practice: c.practice_area,
+        status: c.status,
+        nextDate: c.next_date ? new Date(c.next_date).toISOString() : '',
+        assignee: c.assignee_name || '',
+        files: [],
+        progress: Number(c.progress_pct ?? 0)
+      }));
+    } catch (err) {
+      if (!err._offline) { showToast(err.message || 'Failed to load cases'); return; }
+      const db = loadDB();
+      items = db.cases.slice();
+      if(role==='client'){
+        items = items.filter(c => c.clientEmail === me.email);
+      } else if(role==='employee'){
+        items = items.filter(c => c.assignee === me.email);
+      }
     }
 
     if(search){
@@ -398,16 +468,17 @@ const Cases = {
       const ad = a.nextDate || '';
       const bd = b.nextDate || '';
       if (ad !== bd) return bd.localeCompare(ad);
-      return b.id.localeCompare(a.id);
+      return String(b.id).localeCompare(String(a.id));
     });
 
+    tbody.innerHTML = '';
     for(const c of items){
       const tr = document.createElement('tr');
       const hasFiles = (c.files && c.files.length) ? ` • ${c.files.length} file(s)` : '';
       tr.innerHTML = `
         <td><strong>${c.id}</strong></td>
-        <td>${c.client}</td>
-        <td>${c.practice}</td>
+        <td>${c.client||'—'}</td>
+        <td>${c.practice||'—'}</td>
         <td><span class="badge ${badgeForStatus(c.status)}">${c.status}</span></td>
         <td>${c.nextDate? fmt(c.nextDate): '—'}</td>
         <td>${c.assignee||'—'}</td>
@@ -488,6 +559,7 @@ const Calendar = {
   },
 
   saveFromDialog(){
+    // Local-only create/edit for now
     const db = loadDB(); const me = getSession(); const dlg = q('#eventDialog'); const editId = this.currentEditId;
     const p = { 
       title: (q('#eventTitle').value || '').trim(),
@@ -520,7 +592,7 @@ const Calendar = {
     this.render(); Dashboard.update();
   },
 
-  render(){
+  async render(){
     const {month, year} = this.state;
     const title = new Date(year, month, 1).toLocaleString(undefined, {month:'long', year:'numeric'});
     q('#calendarTitle') && (q('#calendarTitle').textContent = title);
@@ -531,7 +603,26 @@ const Calendar = {
     const days = new Date(year, month+1, 0).getDate();
     for(let i=0;i<startDay;i++){ grid.appendChild(document.createElement('div')); }
 
-    const db = loadDB(); const role = getSession()?.role; const me = getSession();
+    // Events: try backend month range → fallback local
+    let events = [];
+    try {
+      const from = new Date(year, month, 1).toISOString().slice(0,10);
+      const to   = new Date(year, month+1, 0).toISOString().slice(0,10);
+      const data = await API.eventsList(from, to);
+      events = (data.events||[]).map(e => ({
+        id: e.id,
+        title: e.title,
+        date: new Date(e.event_date).toISOString(),
+        time: e.event_time,
+        notes: e.notes || '',
+        caseId: e.case_id ? String(e.case_id) : ''
+      }));
+    } catch (err) {
+      const db = loadDB();
+      events = db.events || [];
+    }
+
+    const role = getSession()?.role; const me = getSession();
 
     for(let d=1; d<=days; d++){
       const cell = document.createElement('div'); cell.className = 'calendar-day';
@@ -546,7 +637,7 @@ const Calendar = {
       });
 
       const evWrap = cell.querySelector('.events');
-      const evs = db.events.filter(e => (e.date||'').startsWith(dateStr));
+      const evs = events.filter(e => (e.date||'').startsWith(dateStr));
       evs.forEach(ev => {
         if(role==='client' && ev.caseId && !ownsClientCase(me, ev.caseId)) return;
         const tag = document.createElement('div'); tag.className = 'calendar-event'; tag.textContent = ev.title + (ev.time? ` @ ${ev.time}`:'');
@@ -588,7 +679,7 @@ const MonthPicker = {
   }
 };
 
-/* ---------- Messages (private, leave-for-me, admin delete-for-all) ---------- */
+/* ---------- Messages (local-only UI for now) ---------- */
 const Messages = {
   state: { currentThread: null },
 
@@ -631,7 +722,6 @@ const Messages = {
   sendMessage(){
     const input = q('#messageInput'); const body = input.value.trim(); if(!body) return;
     const db = loadDB(); const me = getSession(); const t = db.threads.find(x=>x.id===this.state.currentThread); if(!t){ showToast('No thread selected.'); return; }
-    // Safety: only allow members to post
     if (!t.members.includes(me.email)) { showToast('You are not a member of this thread.'); return; }
     t.messages.push({ id:`M-${Date.now()}`, from: me.email, body, ts: Date.now() });
     saveDB(db); input.value=''; this.openThread(t.id);
@@ -658,7 +748,6 @@ const Messages = {
     pushActivity(`${me.email} created thread "${title}"`);
   },
 
-  /* Remove conversation ONLY for me (leave/hide) */
   leaveThread(threadId){
     const me = getSession();
     const db = loadDB();
@@ -686,7 +775,6 @@ const Messages = {
     showToast('Conversation removed from your inbox.');
   },
 
-  /* Admin: delete conversation for ALL members */
   deleteThreadForEveryone(threadId){
     const me = getSession();
     if (me?.role !== 'admin') { showToast('Only Admin can delete for everyone.'); return; }
@@ -709,7 +797,6 @@ const Messages = {
     showToast('Conversation deleted for everyone.');
   },
 
-  /* Buttons in message header */
   ensureActionButtons(threadId){
     const me = getSession();
     const head = q('.message-head');
@@ -767,7 +854,6 @@ const Users = {
     });
   },
 
-  /* Build the "Assign Case optional" options: - show cases with no assignee OR in Pending Review*/
   populateAssignableCases(selectEl){
     const db = loadDB();
     const candidates = (db.cases||[])
@@ -781,7 +867,6 @@ const Users = {
     const db = loadDB(); const dlg = q('#userDialog'); const isEdit = !!id;
     q('#userDialogTitle') && (q('#userDialogTitle').textContent = isEdit? 'Edit User' : 'New User');
 
-    // Populate assignable cases each time dialog opens
     const assignSel = q('#assignCaseForUser');
     if (assignSel) this.populateAssignableCases(assignSel);
 
@@ -815,7 +900,6 @@ const Users = {
       active: true 
     };
 
-    // Create or update user
     let targetUser;
     if(isEditId){ 
       const i = db.users.findIndex(u=>u.id===isEditId); 
@@ -829,7 +913,6 @@ const Users = {
       pushActivity(`${getSession().email} added user ${p.email}`);
     }
 
-    // Optional immediate assignment
     const assignCaseId = (q('#assignCaseForUser')?.value || '').trim();
     if (assignCaseId){
       const c = db.cases.find(x => x.id === assignCaseId);
@@ -862,7 +945,6 @@ const Users = {
 
     db.users = db.users.filter(u => u.id !== id);
 
-    // Clean references
     db.cases = (db.cases||[]).map(c => {
       if(c.assignee === victim.email){
         return { ...c, assignee: '', status: c.status === 'Closed' ? 'Closed' : 'Pending Review' };
@@ -911,8 +993,7 @@ const Appointments = {
     }
   },
 
-  create(){
-    const db = loadDB();
+  async create(){
     const me = getSession(); // client
 
     // Phone validation (+63 + exactly 11 digits)
@@ -921,22 +1002,43 @@ const Appointments = {
     if (country !== '+63'){ showToast('Currently only PH (+63) is supported.'); return; }
     if (local.length !== 11){ showToast('Phone number must be exactly 11 digits (after +63).'); return; }
 
-    const phone = country + local;
-
-    const p = {
-      date: q('#apptDate').value,
-      time: q('#apptTime').value,
-      practice: q('#apptPractice').value,
-      appointmentType: q('#appointmentType')?.value || '',
-      phone,
-      notes: q('#apptNotes').value.trim(),
-      consent: q('#apptConsent').checked
+    const payload = {
+      preferred_date: q('#apptDate').value,
+      preferred_time: q('#apptTime').value,
+      phone_country: country,
+      phone_local: local,
+      appointment_type: q('#appointmentType')?.value || '',
+      case_type: q('#apptPractice')?.value || '',
+      notes: q('#apptNotes')?.value.trim(),
+      consent_given: q('#apptConsent')?.checked
     };
 
-    if(!p.date || !p.time){ showToast('Please select date & time.'); return; }
-    if(!p.appointmentType){ showToast('Please select an appointment type.'); return; }
-    if(!p.consent){ showToast('Please accept the privacy/terms.'); return; }
+    if(!payload.preferred_date || !payload.preferred_time){ showToast('Please select date & time.'); return; }
+    if(!payload.appointment_type){ showToast('Please select an appointment type.'); return; }
+    if(!payload.consent_given){ showToast('Please accept the privacy/terms.'); return; }
 
+    // Try backend first
+    try {
+      await API.apptCreate(payload);
+      showToast('Appointment sent!');
+      q('#appointmentForm').reset();
+      const pref = q('#phonePrefix'); if (pref) pref.textContent = '+63';
+      return;
+    } catch (err) {
+      if (!err._offline) { showToast(err.message || 'Failed'); return; }
+    }
+
+    // Fallback to local behavior (create case + event)
+    const db = loadDB();
+    const p = {
+      date: payload.preferred_date,
+      time: payload.preferred_time,
+      practice: payload.case_type,
+      appointmentType: payload.appointment_type,
+      phone: payload.phone_country + payload.phone_local,
+      notes: payload.notes,
+      consent: payload.consent_given
+    };
     db.appointments.push({ ...p, status:'Pending', client: me.email });
 
     const caseId = createCaseFromAppointment(p, me, db);
@@ -945,7 +1047,6 @@ const Appointments = {
 
     showToast(`Appointment sent. Case ${caseId} is now Pending Review.`);
     q('#appointmentForm').reset();
-    // keep +63 visible after reset
     const pref = q('#phonePrefix'); if (pref) pref.textContent = '+63';
 
     Dashboard.update();
