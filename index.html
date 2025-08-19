@@ -20,7 +20,7 @@
   <main id="loginView" class="view active">
     <section class="auth-card" aria-labelledby="loginTitle">
       <div class="brand">
-        <img class="logo" src="lawfirmlogo.png" alt="Talampas & Associates">
+        <img class="logo" src="image/logo.png" alt="Talampas & Associates">
         <div>
           <h1 id="loginTitle">Talampas & Associates</h1>
           <p class="subtitle">Case Management • Scheduling • Client Communication</p>
@@ -55,7 +55,7 @@
   <div id="appShell" class="app-shell hidden">
     <aside class="sidebar" aria-label="Primary">
       <div class="sidebar-header">
-        <img class="logo small" src="lawfirmlogo.png" alt="TA">
+        <img class="logo small" src="image/logo.png" alt="TA">
         <div>
           <div class="firm">Talampas & Associates</div>
           <div id="roleBadge" class="role-badge">Role</div>
@@ -200,30 +200,37 @@
               <label><span>Preferred Time</span><input type="time" id="apptTime" required /></label>
             </div>
 
-            <!-- Phone: Country + local number PH -->
+            <!-- Phone: Country + local number (multi-country) -->
             <div class="grid grid-2">
               <label>
                 <span>Country</span>
-                <select id="phoneCountry">
-                  <option value="+63" selected>Philippines (+63)</option>
+                <select id="phoneCountry" required>
+                  <option value="PH" data-code="+63">🇵🇭 Philippines (+63)</option>
+                  <option value="SA" data-code="+966">🇸🇦 Saudi Arabia (+966)</option>
+                  <option value="US" data-code="+1">🇺🇸 United States (+1)</option>
+                  <option value="AE" data-code="+971">🇦🇪 Dubai / UAE (+971)</option>
+                  <option value="HK" data-code="+852">🇭🇰 Hong Kong (+852)</option>
+                  <option value="SG" data-code="+65">🇸🇬 Singapore (+65)</option>
+                  <option value="VN" data-code="+84">🇻🇳 Vietnam (+84)</option>
+                  <option value="TH" data-code="+66">🇹🇭 Thailand (+66)</option>
                 </select>
               </label>
 
               <label>
                 <span>Phone Number</span>
-                <div class="phone-wrap">
+                <div class="phone-wrap" style="display:flex;align-items:center;gap:8px">
                   <span id="phonePrefix" class="phone-prefix">+63</span>
                   <input
                     type="tel"
                     id="phoneLocal"
                     name="phoneLocal"
-                    placeholder="___________"
+                    placeholder="local number"
                     inputmode="numeric"
-                    maxlength="11"
                     required
+                    style="flex:1"
                   />
                 </div>
-                <small class="hint">Enter exactly 11 digits after the +63.</small>
+                <small id="phoneHint" class="hint">PH: enter 10 digits (e.g., 9123456789)</small>
               </label>
             </div>
 
@@ -409,5 +416,3 @@
   </div>
 </body>
 </html>
-
-
