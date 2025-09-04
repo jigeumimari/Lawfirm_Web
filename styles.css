@@ -21,8 +21,8 @@ body {
   margin: 0;
   font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
   background:
-    radial-gradient(1200px 600px at 10% -10%, #740097, transparent), /* top-left glow */
-    radial-gradient(1200px 600px at 90% 110%, #740097, transparent), /* bottom-right glow */
+    radial-gradient(1200px 600px at 10% -10%, #740097, transparent),
+    radial-gradient(1400px 720px at 95% 115%, rgba(116,0,151,.9), transparent),
     var(--bg);
   color: var(--text);
 }
@@ -225,13 +225,31 @@ body {
 .btn.toggle { background: #16275b; border-color: rgba(255,255,255,.12) }
 .btn.toggle.active { outline: 2px solid rgba(91,140,255,.6) }
 
-/* ---- Messages ---- */
-.threads { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; max-height: 400px; overflow: auto }
-.thread { padding: 10px; border: 1px solid rgba(255,255,255,.06); border-radius: 10px; cursor: pointer; background: #0f1634 }
+/* ---- Messages / Threads ---- */
+.threads {
+  list-style: none; padding: 0; margin: 0;
+  display: grid; gap: 8px;
+  max-height: 420px; overflow: auto;
+}
+.thread {
+  padding: 10px;
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 10px;
+  cursor: pointer;
+  background: #0f1634;
+  transition: .15s ease;
+}
+.thread:hover { transform: translateY(-1px); filter: brightness(1.05) }
 .thread.active { outline: 2px solid rgba(91,140,255,.6) }
+
+.message-head {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+}
+.message-head h3 { margin: 0; font-size: 16px }
+
 .messages {
   min-height: 320px;
-  max-height: 480px;
+  max-height: 520px;
   overflow: auto;
   border: 1px solid rgba(255,255,255,.06);
   border-radius: 12px;
@@ -240,10 +258,39 @@ body {
 }
 .msg { display: grid; gap: 4px; margin-bottom: 12px }
 .msg .meta { font-size: 12px; color: var(--muted) }
-.msg .bubble { background: #10183a; border: 1px solid rgba(255,255,255,.06); padding: 8px 10px; border-radius: 12px; max-width: 70% }
+.msg .bubble {
+  background: #10183a;
+  border: 1px solid rgba(255,255,255,.06);
+  padding: 10px 12px;
+  border-radius: 12px;
+  max-width: 72%;
+  line-height: 1.4;
+  position: relative;
+  box-shadow: 0 4px 12px rgba(0,0,0,.25);
+}
+.msg .bubble a { color: #9cc0ff; text-decoration: underline }
 .msg.me { justify-items: end }
 .msg.me .bubble { background: #17306a }
-.message-form { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-top: 10px }
+
+.message-form {
+  display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-top: 10px
+}
+
+/* Attachment preview chips with close “×” */
+#attachPreview { margin-top: 6px; display: flex; gap: 6px; flex-wrap: wrap }
+#attachPreview .badge {
+  position: relative;
+  padding-right: 22px;
+  background: #112052;
+  border-color: rgba(255,255,255,.12);
+}
+#attachPreview .badge::after{
+  content:'×';
+  position:absolute; right:6px; top:0; bottom:0;
+  display:grid; place-items:center; width:14px;
+  opacity:.7; font-weight:700;
+}
+#attachPreview .badge:hover::after{ opacity:1 }
 
 /* ---- Dialogs ---- */
 .dialog { border: none; border-radius: 16px; padding: 0; background: transparent }
@@ -291,3 +338,27 @@ input[type="time"] {
 
 /* ---- Visibility helpers ---- */
 .only-staff { display: none; }
+
+/* ---- HARD-HIDE Import/Export everywhere (as requested) ---- */
+#exportDataBtn,
+#importDataBtn,
+#importDataInput {
+  display: none !important;
+}
+
+/* ---- Nicer look for message header action buttons ---- */
+#leaveThreadBtn.btn.ghost { border-color: rgba(255,255,255,.14); }
+#deleteThreadBtn.btn.danger { background: linear-gradient(135deg, #7a1320, #3a0b12); }
+#deleteThreadBtn.btn.danger:hover { filter: brightness(1.08) }
+
+/* ==================== ADDITIONS FOR AVAILABILITY (appended) ==================== */
+
+/* Availability badges */
+.badge.avail { border-color: #14532d; color: #bbf7d0; }
+.badge.unavail { border-color: #7f1d1d; color: #fecaca; }
+
+/* Collapse admin-only column in availability table for non-admins (JS will toggle visibility for admins) */
+#route-availability .only-admin { display: none; }
+
+.badge.avail { border-color:#14532d; color:#bbf7d0; background:#0e1f14; }
+.badge.unavail { border-color:#7f1d1d; color:#fecaca; background:#2a0e12; }
