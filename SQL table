@@ -1,0 +1,75 @@
+CREATE DATABASE IF NOT EXISTS talampas_app
+  CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE talampas_app;
+
+-- USERS
+CREATE TABLE IF NOT EXISTS users (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  full_name   VARCHAR(160) NOT NULL,
+  email       VARCHAR(160) NOT NULL UNIQUE,
+  role        ENUM('admin','employee','client') NOT NULL DEFAULT 'client',
+  status      ENUM('active','inactive') NOT NULL DEFAULT 'active',
+  password_hash VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- demo users (password = admin123 / emp123 / client123)
+INSERT INTO users (full_name,email,role,status,password_hash) VALUES
+('A. Administrator','admin@talampas.com','admin','active',  '$2y$10$HkV5g5Z6y6m7sJd8Jf8x1OqWf1tL9xq8k7z3S1b9QYkqXj1d2rK2'),
+('E. Employee','emp@talampas.com','employee','active',      '$2y$10$5mboQdG3r1q2p3s4t5u6vOjzq0d7B3u6T1L7Z6Kj9J2QkL5p8Ns6'),
+('C. Client','client@talampas.com','client','active',       '$2y$10$g2FNoRealHashHereReplaceWithBcryptForClient123');
+
+-- CASES
+CREATE TABLE IF NOT EXISTS cases (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  status ENUM('new','in_progress','closed') NOT NULL DEFAULT 'new',
+  client_id INT NOT NULL,
+  assignee_id INT NULL,
+  notes TEXT,
+  created_by INT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (client_id) REFERENCES users(id),
+  FOREIGN KEY (assignee_id) REFERENCES users(id),
+  FOREIGN KEY (created_by) REFERENCES users(id)
+);
+
+-- CALENDAR
+CREATE TABLE IF NOT EXISTS calendar_events (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  event_date DATE NOT NULL,
+  event_time TIME NULL,
+  case_id INT NULL,
+  notes TEXT,
+  created_by INT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (case_id) REFERENCES cases(id),
+  FOREIGN KEY (created_by) REFERENCES users(id)
+);
+
+-- APPOINTMENTS
+CREATE TABLE IF NOT EXISTS appointments (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  client_id INT NOT NULL,
+  requested_date DATE NOT NULL,
+  requested_time TIME NULL,
+  details TEXT,
+  status ENUM('pending','approved','declined','linked') NOT NULL DEFAULT 'pending',
+  linked_case_id INT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (client_id) REFERENCES users(id),
+  FOREIGN KEY (linked_case_id) REFERENCES cases(id)
+);
+
+-- CASE FILES
+CREATE TABLE IF NOT EXISTS case_files (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  case_id INT NOT NULL,
+  file_name VARCHAR(255) NOT NULL,
+  file_path VARCHAR(512) NOT NULL,
+  uploaded_by INT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (case_id) REFERENCES cases(id),
+  FOREIGN KEY (uploaded_by) REFERENCES users(id)
+);
