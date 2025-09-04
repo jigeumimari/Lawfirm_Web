@@ -65,6 +65,8 @@
         <button class="nav-btn" data-route="dashboard"><span>Dashboard</span></button>
         <button class="nav-btn" data-route="cases"><span>Cases</span></button>
         <button class="nav-btn" data-route="calendar"><span>Scheduling</span></button>
+        <!-- Availability nav -->
+        <button class="nav-btn" data-route="availability"><span>Availability</span></button>
         <button class="nav-btn" data-route="messages"><span>Messages</span></button>
         <button class="nav-btn only-admin" data-route="users"><span>Users</span></button>
         <button class="nav-btn only-client" data-route="appointments"><span>Book Appointment</span></button>
@@ -145,6 +147,72 @@
           </div>
           <div id="calendarGrid" class="calendar-grid" role="grid" aria-label="Monthly calendar"></div>
         </div>
+      </div>
+
+      <!-- ===================== ROUTE: Availability (ONE LIST) ===================== -->
+      <div id="route-availability" class="route" data-title="Availability">
+        <div class="card">
+          <div class="toolbar">
+            <div class="left"><h3 style="margin:0">Availability</h3></div>
+            <div class="right">
+              <button class="btn primary only-admin" id="newAvailBtn">Add Availability</button>
+            </div>
+          </div>
+
+          <table class="table" id="availTable" aria-label="Attorney availability">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Date</th>
+                <th>From</th>
+                <th>To</th>
+                <th>Status / Notes</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <!-- Dialog: Add/Edit availability -->
+        <dialog id="availDialog" class="dialog">
+          <form id="availForm" method="dialog" class="form">
+            <h3 id="availDialogTitle">Add Availability</h3>
+
+            <div class="grid grid-2">
+              <label>
+                <span>Attorney / Staff</span>
+                <select id="availUser" required></select>
+              </label>
+
+              <label>
+                <span>Date</span>
+                <input id="availDateField" type="date" required />
+              </label>
+            </div>
+
+            <div class="grid grid-2">
+              <label><span>From</span><input id="availFrom" type="time" required></label>
+              <label><span>To</span><input id="availTo" type="time" required></label>
+            </div>
+
+            <label>
+              <span>Status</span>
+              <select id="availStatus" required>
+                <option value="Available">Available</option>
+                <option value="Unavailable">Unavailable</option>
+              </select>
+            </label>
+
+            <label><span>Notes</span><textarea id="availNotes" rows="3" placeholder="Optional notes…"></textarea></label>
+
+            <div class="actions">
+              <button type="button" class="btn danger hidden" id="deleteAvailBtn">Delete</button>
+              <button type="button" class="btn ghost" id="cancelAvailBtn">Cancel</button>
+              <button class="btn primary" type="submit">Save</button>
+            </div>
+          </form>
+        </dialog>
       </div>
 
       <!-- ===================== ROUTE: Messages ===================== -->
