@@ -8,17 +8,89 @@ const q  = (sel, ctx=document) => ctx.querySelector(sel);
 const qa = (sel, ctx=document) => Array.from(ctx.querySelectorAll(sel));
 const fmt = (d) => new Date(d).toLocaleDateString(undefined, {year:'numeric', month:'short', day:'2-digit'});
 
+/* Extra date helpers (for Availability & UX) */
+function localISO(d = new Date()){
+  const x = new Date(d);
+  x.setMinutes(x.getMinutes() - x.getTimezoneOffset());
+  return x.toISOString().split('T')[0];
+}
+function prettyDate(isoDate){
+  if(!isoDate) return '—';
+  const d = new Date(`${isoDate}T00:00:00`);
+  return d.toLocaleDateString(undefined, { weekday:'short', month:'short', day:'2-digit', year:'numeric' });
+}
+function timeAgo(ts){
+  if (!ts) return '';
+  const diff = Math.max(0, Date.now() - Number(ts));
+  const s = Math.floor(diff/1000);
+  if (s < 20) return 'just now';
+  if (s < 60) return `${s}s ago`;
+  const m = Math.floor(s/60);
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m/60);
+  if (h < 24) return `${h}h ago`;
+  const d = Math.floor(h/24);
+  return `${d}d ago`;
+}
+
 /* ---------- Storage keys ---------- */
 const DB_KEY = 'ta_db_v2_intake';
 const SESSION_KEY = 'ta_session_v2';
+const DB_REV_KEY = 'ta_db_rev_v2'; // live-sync revision counter
+
+/* ---------- Attachments policy (UI + enforcement) ---------- */
+const ATTACH_ALLOWED = ['.pdf','.doc','.docx','.png','.jpg','.jpeg','.heic','.txt'];
+const ATTACH_MAX_BYTES = 200 * 1024 * 1024; // 200 MB total cap per message
+const ATTACH_HINT = `Attach files: ${ATTACH_ALLOWED.map(x=>x.replace('.','').toUpperCase()).join(', ')} • up to ${Math.floor(ATTACH_MAX_BYTES/1024/1024)} MB total`;
+
+/* ---------- Presence (realtime-ish online/away/offline) ---------- */
+const PRESENCE_PREFIX = 'ta_presence_';
+const PRESENCE_HEARTBEAT_MS = 8000;          // send heartbeat every 8s
+const PRESENCE_ONLINE_MS = 20 * 1000;        // <=20s => online
+const PRESENCE_AWAY_MS   = 5 * 60 * 1000;    // <=5m  => away, else offline
+
+const Presence = {
+  timer: null,
+  email: null,
+
+  start(email){
+    this.stop();
+    this.email = email;
+    this.beat();
+    this.timer = setInterval(()=> this.beat(), PRESENCE_HEARTBEAT_MS);
+    window.addEventListener('beforeunload', () => this.clear(), { once:true });
+    document.addEventListener('visibilitychange', () => this.beat());
+  },
+  beat(){
+    if (!this.email) return;
+    localStorage.setItem(PRESENCE_PREFIX + this.email, String(Date.now()));
+  },
+  clear(){
+    if (this.email) localStorage.removeItem(PRESENCE_PREFIX + this.email);
+  },
+  stop(){
+    if (this.timer){ clearInterval(this.timer); this.timer = null; }
+  },
+  get(email){
+    const ts = Number(localStorage.getItem(PRESENCE_PREFIX + email) || 0);
+    const age = Date.now() - ts;
+    if (age <= PRESENCE_ONLINE_MS) return { state:'online', ts };
+    if (age <= PRESENCE_AWAY_MS)   return { state:'away', ts };
+    return { state:'offline', ts };
+  },
+  dot(state){
+    const color = state==='online' ? '#22c55e' : state==='away' ? '#eab308' : '#64748b';
+    return `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${color};margin:0 6px 1px 6px;vertical-align:middle;"></span>`;
+  }
+};
 
 /* ---------- Seed data / defaults ---------- */
 function addDays(d, n=0){ const x = new Date(d); x.setDate(x.getDate()+n); return x.toISOString(); }
 const DEFAULT_DB = {
   users: [
-    { id:'u1', name:'A. Administrator', email:'admin@talampas.com', role:'admin',    password:'admin123', active:true },
-    { id:'u2', name:'E. Employee',      email:'emp@talampas.com',   role:'employee', password:'emp123',   active:true },
-    { id:'u3', name:'C. Client',        email:'client@talampas.com',role:'client',   password:'client123',active:true },
+    { id:'u1', name:'A. Administrator', email:'admin@talampas.com', role:'admin',    password:'admin123', active:true, resetPin:'1111' },
+    { id:'u2', name:'E. Employee',      email:'emp@talampas.com',   role:'employee', password:'emp123',   active:true, resetPin:'2222' },
+    { id:'u3', name:'C. Client',        email:'client@talampas.com',role:'client',   password:'client123',active:true, resetPin:'3333' },
   ],
   cases: [
     { id:'C-2001', client:'C. Client', clientEmail:'client@talampas.com', practice:'Family Law',
@@ -32,12 +104,13 @@ const DEFAULT_DB = {
     { id:'T-1', title:'Admin ↔ Client – C-2001',
       members:['admin@talampas.com','client@talampas.com'],
       messages:[
-        { id:'M-1', from:'admin@talampas.com',  body:'Welcome to Talampas & Associates. We will coordinate here.', ts: Date.now()-86400000 },
-        { id:'M-2', from:'client@talampas.com', body:'Thank you!', ts: Date.now()-86000000 },
+        { id:'M-1', from:'admin@talampas.com',  body:'Welcome to Talampas & Associates. We will coordinate here.', ts: Date.now()-86400000, attachments: [], hiddenFor: [] },
+        { id:'M-2', from:'client@talampas.com', body:'Thank you!', ts: Date.now()-86000000, attachments: [], hiddenFor: [] },
       ]
     }
   ],
   appointments: [],
+  availability: [],
   activity: [ 'Intake workflow edition initialized.' ]
 };
 
@@ -48,13 +121,20 @@ function loadDB(){
     localStorage.setItem(DB_KEY, JSON.stringify(DEFAULT_DB));
     return structuredClone(DEFAULT_DB);
   }
-  try { return JSON.parse(raw); }
+  try {
+    const data = JSON.parse(raw);
+    if (!Array.isArray(data.availability)) data.availability = [];
+    return data;
+  }
   catch {
     localStorage.setItem(DB_KEY, JSON.stringify(DEFAULT_DB));
     return structuredClone(DEFAULT_DB);
   }
 }
-function saveDB(db){ localStorage.setItem(DB_KEY, JSON.stringify(db)); }
+function saveDB(db){
+  localStorage.setItem(DB_KEY, JSON.stringify(db));
+  localStorage.setItem(DB_REV_KEY, String(Date.now())); // bump rev so listeners update
+}
 function pushActivity(msg){
   const db = loadDB();
   db.activity.unshift(`${new Date().toLocaleString()}: ${msg}`);
@@ -69,6 +149,322 @@ function clearSession(){ localStorage.removeItem(SESSION_KEY); }
 function resetCaseSearch() {
   const s = q('#caseSearch');
   if (s) s.value = '';
+}
+
+/* ---------- Live Sync (no backend) ---------- */
+const LiveSync = {
+  _rev: localStorage.getItem(DB_REV_KEY) || '0',
+  _timer: null,
+
+  init(){
+    window.addEventListener('storage', (e) => {
+      if (e.key === DB_KEY || e.key === DB_REV_KEY) this._onChange();
+      if (e.key && e.key.startsWith(PRESENCE_PREFIX)) {
+        Users.renderTable(); // live presence update
+      }
+    });
+    this._timer = setInterval(() => {
+      const nowRev = localStorage.getItem(DB_REV_KEY) || '0';
+      if (nowRev !== this._rev) this._onChange();
+      if (isRouteActive('users')) Users.renderTable();
+    }, 1000);
+  },
+
+  _onChange(){
+    this._rev = localStorage.getItem(DB_REV_KEY) || '0';
+    Messages.renderThreads();
+
+    const tId = Messages.state.currentThread;
+    if (tId) {
+      const db = loadDB();
+      const me = getSession();
+      const t = (db.threads||[]).find(x => x.id === tId);
+      if (t && (t.members||[]).includes(me?.email)) {
+        Messages.openThread(tId);
+      } else {
+        Messages._resetPane();
+      }
+    }
+    Dashboard.update();
+    if (isRouteActive('users')) Users.renderTable();
+  },
+
+  forceRefresh(){ this._onChange(); }
+};
+
+function isRouteActive(name){
+  const route = q(`#route-${name}`);
+  return route && route.classList.contains('active');
+}
+
+/* ---------- Toast & Confirm ---------- */
+function showToast(msg){
+  const el = q('#toast'); if(!el) return;
+  el.textContent = msg; el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'), 2200);
+}
+
+/* Professional confirm dialog (replaces window.confirm) */
+const Confirm = {
+  _dlg: null,
+  ensure(){
+    if (this._dlg) return;
+    const dlg = document.createElement('dialog');
+    dlg.id = 'confirmDialog';
+    dlg.className = 'dialog';
+    dlg.innerHTML = `
+      <form class="form" method="dialog" id="confirmForm">
+        <h3 id="cfTitle">Confirm</h3>
+        <div id="cfBody" class="hint">Are you sure?</div>
+        <div class="actions">
+          <button type="button" class="btn ghost" id="cfCancel">Cancel</button>
+          <button type="submit" class="btn" id="cfOk">OK</button>
+        </div>
+      </form>`;
+    document.body.appendChild(dlg);
+    this._dlg = dlg;
+    q('#cfCancel', dlg).addEventListener('click', ()=> dlg.close('cancel'));
+    q('#confirmForm', dlg).addEventListener('submit', (e)=>{ e.preventDefault(); dlg.close('ok'); });
+  },
+  async open({ title='Confirm', body='Are you sure?', okText='OK', cancelText='Cancel', danger=false }={}){
+    this.ensure();
+    q('#cfTitle', this._dlg).textContent = title;
+    q('#cfBody', this._dlg).textContent = body;
+    const okBtn = q('#cfOk', this._dlg);
+    okBtn.textContent = okText;
+    okBtn.className = 'btn ' + (danger ? 'danger' : 'primary');
+    q('#cfCancel', this._dlg).textContent = cancelText;
+    this._dlg.showModal();
+    return new Promise(resolve => {
+      this._dlg.addEventListener('close', function handler(){
+        resolve(this.returnValue === 'ok');
+        this.removeEventListener('close', handler);
+      });
+    });
+  }
+};
+
+function showLogin(){
+  q('#appShell')?.classList.add('hidden');
+  q('#loginView')?.classList.add('active');
+}
+
+/* Helper: find an active admin email (fallback to built-in) */
+function getAdminEmail(){
+  const db = loadDB();
+  const admin = (db.users || []).find(u => u.role === 'admin' && u.active) || db.users[0];
+  return admin?.email || 'admin@talampas.com';
+}
+
+/* NOTE: intentionally kept but no longer auto-called */
+function ensureWelcomeThreadForUser(userEmail){ /* disabled by request – no auto threads */ }
+
+/* ---------- Password Reset (UI auto-injected; front-end only for now) ---------- */
+const PasswordReset = {
+  init(){
+    this.ensureLink();
+    this.ensureDialog();
+  },
+
+  ensureLink(){
+    const form = q('#loginForm');
+    if (!form || q('#forgotLink')) return;
+
+    const link = document.createElement('button');
+    link.type = 'button';
+    link.id = 'forgotLink';
+    link.className = 'btn ghost';
+    link.textContent = 'Forgot password?';
+
+    link.style.marginTop = '6px';
+    link.style.fontSize = '12px';
+    link.style.padding = '2px 6px';
+    link.style.width = 'auto';
+    link.style.alignSelf = 'start';
+    link.style.opacity = '0.9';
+    link.style.textDecoration = 'underline';
+    link.style.background = 'transparent';
+    link.style.border = 'none';
+    link.style.cursor = 'pointer';
+
+    link.addEventListener('click', ()=> this.openDialog());
+
+    const submitBtn = form.querySelector('button[type="submit"], input[type="submit"]');
+    if (submitBtn && submitBtn.insertAdjacentElement) {
+      submitBtn.insertAdjacentElement('afterend', link);
+    } else {
+      form.appendChild(link);
+    }
+  },
+
+  ensureDialog(){
+    if (q('#forgotDialog')) return;
+    const dlg = document.createElement('dialog');
+    dlg.id = 'forgotDialog';
+    dlg.className = 'dialog';
+    dlg.innerHTML = `
+      <form class="form" id="forgotForm">
+        <h3>Reset Password</h3>
+        <label><span>Email</span>
+          <input type="email" id="fpEmail" placeholder="you@example.com" required />
+        </label>
+        <label><span>Reset PIN</span>
+          <input type="password" id="fpPin" placeholder="4–8 digits set by Admin" required minlength="4" maxlength="8" />
+          <small class="hint">Ask Admin for your Reset PIN.</small>
+        </label>
+        <label><span>New password</span>
+          <input type="password" id="fpNew" required minlength="6" />
+        </label>
+        <label><span>Confirm new password</span>
+          <input type="password" id="fpConfirm" required minlength="6" />
+        </label>
+        <div class="actions">
+          <button type="button" class="btn ghost" id="fpCancel">Cancel</button>
+          <button type="submit" class="btn primary">Reset</button>
+        </div>
+      </form>`;
+    document.body.appendChild(dlg);
+
+    q('#fpCancel').addEventListener('click', ()=> dlg.close());
+    q('#forgotForm').addEventListener('submit', (e)=>{
+      e.preventDefault();
+      this._applyReset();
+    });
+  },
+
+  openDialog(){
+    const dlg = q('#forgotDialog');
+    if (!dlg) return;
+    ['fpEmail','fpPin','fpNew','fpConfirm'].forEach(id => { const el = q('#'+id); if (el) el.value=''; });
+    dlg.showModal();
+  },
+
+  _applyReset(){
+    const email = q('#fpEmail').value.trim().toLowerCase();
+    const pin   = q('#fpPin').value.trim();
+    const pass1 = q('#fpNew').value;
+    const pass2 = q('#fpConfirm').value;
+
+    if (!email || !pin || !pass1 || !pass2){ showToast('Complete all fields.'); return; }
+    if (pass1 !== pass2){ showToast('Passwords do not match.'); return; }
+
+    const db = loadDB();
+    const u = (db.users||[]).find(x => x.email === email && x.active);
+    if (!u){ showToast('Account not found or inactive.'); return; }
+
+    if (String(u.resetPin||'') !== String(pin)){ showToast('Invalid Reset PIN.'); return; }
+
+    u.password = pass1;
+    saveDB(db);
+
+    q('#forgotDialog').close();
+    showToast('Password updated. You can now log in.');
+  }
+};
+
+/* ---------- Remove "Demo logins" block (if present in HTML) ---------- */
+function removeDemoLoginsUI(){
+  qa('summary').forEach(s => {
+    if (s.textContent && /demo\s*logins/i.test(s.textContent.trim())) {
+      const details = s.closest('details');
+      (details || s).remove();
+    }
+  });
+  qa('#demoLogins, .demo-logins, [data-demo-logins]').forEach(el => el.remove());
+}
+
+function enterApp(user){
+  // Reset messaging state so previous account’s UI can’t linger
+  if (Messages?.state) {
+    Messages.state.currentThread = null;
+    Messages.state.pendingAttachments = [];
+  }
+  if (typeof Messages?._resetPane === 'function') {
+    Messages._resetPane();        // also strips admin-only buttons
+  }
+  Messages?.removeActionButtons?.(); // double-sure
+
+  q('#loginView')?.classList.remove('active');
+  q('#appShell')?.classList.remove('hidden');
+  q('#currentUserName') && (q('#currentUserName').textContent = user.name);
+  q('#roleBadge') && (q('#roleBadge').textContent = user.role.toUpperCase());
+
+  const role = user.role;
+  document.body.dataset.role = role;
+
+  qa('.only-admin').forEach(el => el.style.display = (role==='admin')? 'inline-flex' : 'none');
+  qa('.only-employee').forEach(el => el.style.display = (role==='admin'||role==='employee')? 'inline-flex' : 'none');
+  qa('.only-client').forEach(el => el.style.display = (role==='client')? 'inline-flex' : 'none');
+
+  const newThreadBtn = q('#newThreadBtn');
+  if (newThreadBtn) newThreadBtn.style.display = 'inline-flex';
+
+  const exportBtn = q('#exportDataBtn');
+  const importBtn = q('#importDataBtn');
+  if (exportBtn) exportBtn.style.display = 'none';
+  if (importBtn) importBtn.style.display = 'none';
+
+  resetCaseSearch();
+
+  routeTo('dashboard');
+  Dashboard.update();
+  Cases.renderTable();
+  Calendar.render();
+  Availability.ensureAddButton();
+  Availability.renderTable();
+  Messages.renderThreads();
+  Users.renderTable();
+  Appointments.renderTable();
+
+  // Presence heartbeat for this signed-in user
+  Presence.start(user.email);
+
+  LiveSync.forceRefresh();
+}
+function onLogin(e){
+  e.preventDefault();
+  const email = q('#email').value.trim().toLowerCase();
+  const password = q('#password').value;
+  const db = loadDB();
+  const user = db.users.find(u => u.email===email && u.password===password && u.active);
+  if(!user){ showToast('Invalid credentials or inactive account.'); return; }
+  setSession(user);
+  pushActivity(`${user.email} logged in.`);
+  enterApp(user);
+  showToast(`Welcome back, ${user.name.split(' ')[0]}!`);
+}
+function onLogout(){
+  const me = getSession();
+  if(me) pushActivity(`${me.email} logged out.`);
+  Presence.clear();
+  Presence.stop();
+  clearSession();
+  Messages?.removeActionButtons?.(); // ensure admin-only controls are gone
+  showLogin();
+  showToast('Logged out.');
+}
+function routeTo(name){
+  qa('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.route===name));
+  qa('.route').forEach(r => r.classList.remove('active'));
+  const route = q(`#route-${name}`); route && route.classList.add('active');
+  if(route?.dataset?.title){ document.title = `${route.dataset.title} – Talampas & Associates`; }
+
+  if (name === 'cases') {
+    resetCaseSearch();
+    Cases.renderTable();
+  }
+  if (name === 'availability') {
+    Availability.ensureAddButton();
+    Availability.renderTable();
+  }
+  if (name === 'users') {
+    Users.renderTable(); // refresh presence immediately when entering Users tab
+  }
+  if (name !== 'messages') {
+    // when leaving Messages, make sure stray buttons don't linger
+    Messages?.removeActionButtons?.();
+  }
+  Dashboard.update();
 }
 
 /* ---------- Boot ---------- */
@@ -88,9 +484,15 @@ document.addEventListener('DOMContentLoaded', () => {
   MonthPicker.init();
   Messages.init();
   Users.init();
-  Appointments.init();   // includes updated multi-country phone logic
+  Appointments.init();
+  Availability.init();
   GlobalSearch.init();
   ImportExport.init();
+  PasswordReset.init(); // forgot-password UI
+  LiveSync.init();      // live-sync for messages + presence
+
+  // Remove demo logins UI block if present
+  removeDemoLoginsUI();
 
   // Dialog cancel/delete buttons
   q('#cancelCaseBtn')?.addEventListener('click', () => q('#caseDialog').close());
@@ -102,69 +504,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const me = getSession();
   if(me){ enterApp(me); } else { showLogin(); }
 });
-
-/* ---------- App shell (routing, toast, auth) ---------- */
-function showToast(msg){
-  const el = q('#toast'); if(!el) return;
-  el.textContent = msg; el.classList.add('show');
-  setTimeout(()=>el.classList.remove('show'), 2200);
-}
-function showLogin(){
-  q('#appShell')?.classList.add('hidden');
-  q('#loginView')?.classList.add('active');
-}
-function enterApp(user){
-  q('#loginView')?.classList.remove('active');
-  q('#appShell')?.classList.remove('hidden');
-  q('#currentUserName') && (q('#currentUserName').textContent = user.name);
-  q('#roleBadge') && (q('#roleBadge').textContent = user.role.toUpperCase());
-
-  const role = user.role;
-  qa('.only-admin').forEach(el => el.style.display = (role==='admin')? 'inline-flex' : 'none');
-  qa('.only-employee').forEach(el => el.style.display = (role==='admin'||role==='employee')? 'inline-flex' : 'none');
-  qa('.only-client').forEach(el => el.style.display = (role==='client')? 'inline-flex' : 'none');
-
-  resetCaseSearch();
-
-  routeTo('dashboard');
-  Dashboard.update();
-  Cases.renderTable();
-  Calendar.render();
-  Messages.renderThreads();
-  Users.renderTable();
-  Appointments.renderTable();
-}
-function onLogin(e){
-  e.preventDefault();
-  const email = q('#email').value.trim().toLowerCase();
-  const password = q('#password').value;
-  const db = loadDB();
-  const user = db.users.find(u => u.email===email && u.password===password && u.active);
-  if(!user){ showToast('Invalid credentials or inactive account.'); return; }
-  setSession(user);
-  pushActivity(`${user.email} logged in.`);
-  enterApp(user);
-  showToast(`Welcome back, ${user.name.split(' ')[0]}!`);
-}
-function onLogout(){
-  const me = getSession();
-  if(me) pushActivity(`${me.email} logged out.`);
-  clearSession();
-  showLogin();
-  showToast('Logged out.');
-}
-function routeTo(name){
-  qa('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.route===name));
-  qa('.route').forEach(r => r.classList.remove('active'));
-  const route = q(`#route-${name}`); route && route.classList.add('active');
-  if(route?.dataset?.title){ document.title = `${route.dataset.title} – Talampas & Associates`; }
-
-  if (name === 'cases') {
-    resetCaseSearch();
-    Cases.renderTable();
-  }
-  Dashboard.update();
-}
 
 /* ---------- Dashboard (role-aware) ---------- */
 const Dashboard = {
@@ -371,6 +710,21 @@ const Cases = {
     Calendar.render();
   },
 
+  async delete(id){
+    const ok = await Confirm.open({
+      title: `Delete Case ${id}?`,
+      body: 'This action cannot be undone.',
+      okText: 'Delete',
+      cancelText: 'Cancel',
+      danger: true
+    });
+    if(!ok) return;
+    const db = loadDB(); const me = getSession();
+    db.cases = db.cases.filter(c=>c.id!==id);
+    saveDB(db); pushActivity(`${me.email} deleted case ${id}.`);
+    this.renderTable(); Dashboard.update();
+  },
+
   renderTable(){
     const db = loadDB();
     const tbody = q('#caseTable tbody');
@@ -416,14 +770,6 @@ const Cases = {
       tr.querySelector('.edit')?.addEventListener('click', ()=> this.openDialog(c.id));
       tr.querySelector('.del')?.addEventListener('click',  ()=> this.delete(c.id));
     }
-  },
-
-  delete(id){
-    const db = loadDB(); const me = getSession();
-    if(!confirm(`Delete case ${id}?`)) return;
-    db.cases = db.cases.filter(c=>c.id!==id);
-    saveDB(db); pushActivity(`${me.email} deleted case ${id}.`);
-    this.renderTable(); Dashboard.update();
   }
 };
 function genCaseId(db){ let n = 2000 + db.cases.length; let id; do{ id = `C-${n++}`; } while(db.cases.some(c=>c.id===id)); return id; }
@@ -509,10 +855,17 @@ const Calendar = {
     saveDB(db); dlg.close(); this.render(); Dashboard.update();
   },
 
-  remove(){
+  async remove(){
+    if(!this.currentEditId) return;
+    const ok = await Confirm.open({
+      title: 'Delete Event?',
+      body: 'This action cannot be undone.',
+      okText: 'Delete',
+      cancelText: 'Cancel',
+      danger: true
+    });
+    if(!ok) return;
     const db = loadDB(); const me = getSession(); const id = this.currentEditId;
-    if(!id) return;
-    if(!confirm('Delete this event?')) return;
     db.events = db.events.filter(e => e.id !== id);
     saveDB(db);
     q('#eventDialog').close();
@@ -588,86 +941,354 @@ const MonthPicker = {
   }
 };
 
-/* ---------- Messages (private, leave-for-me, admin delete-for-all) ---------- */
+/* ---------- Messages (private threads; attachment UI) ---------- */
+
+/* Helper: readable display based on members (names) + keep case suffix */
+function threadDisplayTitle(t){
+  const db = loadDB();
+  const me = getSession();
+  const meName = (db.users||[]).find(u=>u.email===me.email)?.name || me.email;
+  const others = (t.members||[]).filter(e => e !== me.email);
+  const otherNames = others.map(e => (db.users||[]).find(u=>u.email===e)?.name || e);
+  const caseSuffixMatch = (t.title||'').match(/–\s*(C-\d+)/);
+  const suffix = caseSuffixMatch ? ` – ${caseSuffixMatch[1]}` : '';
+  return (otherNames.length ? `${meName} ↔ ${otherNames.join(', ')}` : meName) + suffix;
+}
+
+/* Robust unique id for threads */
+function genThreadId(){ return `T-${Date.now().toString(36)}${Math.random().toString(36).slice(2,6)}`; }
+
 const Messages = {
-  state: { currentThread: null },
+  state: { currentThread: null, pendingAttachments: [] },
 
   init(){
+    this._ensureAttachmentUI();
+
     q('#newThreadBtn')?.addEventListener('click', ()=> this.createThread());
     q('#messageForm')?.addEventListener('submit', (e)=>{ e.preventDefault(); this.sendMessage(); });
+
+    // File input change handler with type + 200MB total validation
+    q('#msgFile')?.addEventListener('change', async (e) => {
+      const files = e.target.files;
+      if (!files || !files.length) return;
+
+      const invalid = [];
+      const okFiles = [];
+      for (const f of files) {
+        const ext = '.' + (f.name.split('.').pop() || '').toLowerCase();
+        if (!ATTACH_ALLOWED.includes(ext)) invalid.push(f.name);
+        else okFiles.push(f);
+      }
+      if (invalid.length) showToast(`Blocked: ${invalid.slice(0,3).join(', ')} (unsupported)`);
+
+      const existingTotal = this.state.pendingAttachments.reduce((s,f)=>s+(f.size||0),0);
+      const newTotalRaw   = okFiles.reduce((s,f)=>s+(f.size||0),0);
+      if (existingTotal + newTotalRaw > ATTACH_MAX_BYTES){
+        showToast(`Attachments limit: ${Math.floor(ATTACH_MAX_BYTES/1024/1024)} MB total`);
+        e.target.value = '';
+        return;
+      }
+
+      const arr = await readFilesAsDataURLs(okFiles);
+      this.state.pendingAttachments.push(...arr);
+      this._renderAttachPreview();
+      e.target.value = '';
+    });
+
+    q('#attachBtn')?.addEventListener('click', ()=>{
+      showToast(ATTACH_HINT);                 // <— show on EVERY click
+      q('#msgFile')?.click();
+    });
+  },
+
+  /* Remove action buttons (used on login/logout/route change/no thread) */
+  removeActionButtons(){
+    q('#leaveThreadBtn')?.remove();
+    q('#deleteThreadBtn')?.remove();
+  },
+
+  _resetPane(){
+    const pane = q('#messagePane'); if (pane) pane.innerHTML = '';
+    const title = q('#threadTitle'); if (title) title.textContent = 'Select a conversation';
+    const preview = q('#attachPreview'); if (preview) preview.innerHTML = '';
+    this.removeActionButtons(); // ensure admin-only buttons don’t linger
+  },
+
+  _ensureAttachmentUI(){
+    const form = q('#messageForm');
+    if (!form) return;
+    if (q('#attachBtn')) return;
+
+    const input = q('#messageInput'); if (!input) return;
+    const wrap = document.createElement('div');
+    wrap.style.display = 'grid';
+    wrap.style.gridTemplateColumns = 'auto 1fr auto';
+    wrap.style.gap = '8px';
+    wrap.appendChild(this._makeAttachButton());
+    wrap.appendChild(input.cloneNode(true));
+    input.replaceWith(wrap);
+    wrap.children[1].id = 'messageInput';
+
+    const file = document.createElement('input');
+    file.type = 'file';
+    file.id = 'msgFile';
+    file.multiple = true;
+    file.accept = ATTACH_ALLOWED.join(','); // advertise types
+    file.style.display = 'none';
+    form.appendChild(file);
+
+    const preview = document.createElement('div');
+    preview.id = 'attachPreview';
+    preview.style.display = 'flex';
+    preview.style.flexWrap = 'wrap';
+    preview.style.gap = '6px';
+    preview.style.marginTop = '6px';
+
+    // No static "Allowed..." line; toast shows on each + click
+    form.insertBefore(preview, form.querySelector('button[type="submit"]'));
+  },
+
+  _makeAttachButton(){
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.id = 'attachBtn';
+    btn.className = 'btn';
+    btn.title = ATTACH_HINT;
+    btn.textContent = '+';
+    btn.style.width = '40px';
+    return btn;
+  },
+
+  _renderAttachPreview(){
+    const host = q('#attachPreview'); if(!host) return;
+    host.innerHTML = '';
+    this.state.pendingAttachments.forEach((f, idx) => {
+      const chip = document.createElement('span');
+      chip.className = 'badge';
+      chip.textContent = `${f.name} (${Math.round((f.size||0)/1024)} KB)`;
+      chip.style.cursor = 'pointer';
+      chip.title = 'Remove';
+      chip.addEventListener('click', ()=>{
+        this.state.pendingAttachments.splice(idx,1);
+        this._renderAttachPreview();
+      });
+      host.appendChild(chip);
+    });
   },
 
   renderThreads(){
-    const db = loadDB(); const me = getSession(); const list = q('#threadList'); if(!list) return; list.innerHTML = '';
-    (db.threads||[]).filter(t => t.members.includes(me.email)).forEach(t => {
-      const li = document.createElement('li'); li.className = 'thread'; li.textContent = t.title; li.setAttribute('role','option');
+    const db = loadDB(); const me = getSession(); 
+    const list = q('#threadList'); if(!list) return; 
+    list.innerHTML = '';
+    const mine = (db.threads||[]).filter(t => (t.members||[]).includes(me?.email));
+    mine.forEach(t => {
+      const li = document.createElement('li');
+      li.className = 'thread';
+      li.textContent = threadDisplayTitle(t);
+      li.setAttribute('role','option');
       li.addEventListener('click', ()=> this.openThread(t.id));
       if(this.state.currentThread===t.id) li.classList.add('active');
       list.appendChild(li);
     });
+
+    if (this.state.currentThread && !mine.some(t=>t.id===this.state.currentThread)){
+      this.state.currentThread = null;
+      this._resetPane();
+    }
   },
 
   openThread(id){
-    this.state.currentThread = id;
     const db = loadDB();
-    const t = db.threads.find(x=>x.id===id); if(!t) return;
+    const me = getSession();
+    const t = (db.threads||[]).find(x=>x.id===id); 
+    if(!t) { showToast('Conversation not found.'); return; }
+    if(!(t.members||[]).includes(me?.email)){ 
+      showToast('You are not a member of this conversation.');
+      this.state.currentThread = null;
+      this._resetPane();
+      return;
+    }
 
-    q('#threadTitle') && (q('#threadTitle').textContent = t.title);
+    this.state.currentThread = id;
 
+    q('#threadTitle') && (q('#threadTitle').textContent = threadDisplayTitle(t));
     this.ensureActionButtons(id);
 
-    const wrap = q('#messagePane'); if(!wrap) return; wrap.innerHTML = '';
-    t.messages.forEach(m => wrap.appendChild(this.renderMsg(m)));
+    const wrap = q('#messagePane'); if(!wrap) return; 
+    wrap.innerHTML = '';
+    (t.messages||[]).forEach(m => {
+      const el = this.renderMsg(t.id, m);
+      if (el) wrap.appendChild(el);
+    });
     wrap.scrollTop = wrap.scrollHeight;
   },
 
-  renderMsg(m){
-    const me = getSession(); const div = document.createElement('div');
+  renderMsg(threadId, m){
+    const me = getSession();
+    if ((m.hiddenFor||[]).includes(me.email)) return null;
+
+    const div = document.createElement('div');
     div.className = 'msg' + (m.from===me.email? ' me':'' );
-    div.innerHTML = `<div class="meta">${m.from} • ${new Date(m.ts).toLocaleString()}</div><div class="bubble">${escapeHtml(m.body)}</div>`;
+
+    const meta = `<div class="meta">${m.from} • ${new Date(m.ts).toLocaleString()}</div>`;
+    let atts = '';
+    if (m.attachments && m.attachments.length){
+      const links = m.attachments.map(a => `<a download="${a.name}" href="${a.data}">${a.name}</a>`).join(' • ');
+      atts = `<div class="muted" style="margin-top:6px">${links}</div>`;
+    }
+
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble';
+    bubble.innerHTML = `${escapeHtml(m.body||'')}${atts}`;
+
+    div.innerHTML = meta;
+    div.appendChild(bubble);
     return div;
   },
 
-  sendMessage(){
-    const input = q('#messageInput'); const body = input.value.trim(); if(!body) return;
-    const db = loadDB(); const me = getSession(); const t = db.threads.find(x=>x.id===this.state.currentThread); if(!t){ showToast('No thread selected.'); return; }
-    // Safety: only allow members to post
+  async sendMessage(){
+    const input = q('#messageInput'); const body = (input?.value || '').trim();
+    const db = loadDB(); const me = getSession(); 
+    const t = db.threads.find(x=>x.id===this.state.currentThread); 
+    if(!t){ showToast('No thread selected.'); return; }
+    if (!body && !(this.state.pendingAttachments?.length)){ showToast('Type a message or attach a file.'); return; }
     if (!t.members.includes(me.email)) { showToast('You are not a member of this thread.'); return; }
-    t.messages.push({ id:`M-${Date.now()}`, from: me.email, body, ts: Date.now() });
-    saveDB(db); input.value=''; this.openThread(t.id);
+
+    const atts = this.state.pendingAttachments.slice();
+    this.state.pendingAttachments = [];
+    this._renderAttachPreview();
+
+    t.messages.push({ id:`M-${Date.now()}`, from: me.email, body, ts: Date.now(), attachments: atts, hiddenFor: [] });
+    saveDB(db); if (input) input.value='';
+    this.openThread(t.id);
     pushActivity(`${me.email} sent a message in "${t.title}"`);
     Dashboard.update();
   },
 
+  /* Start a conversation (ANY role; only chosen members can see) */
   createThread(){
-    const db = loadDB(); const me = getSession();
-    const title = prompt('Thread title (e.g., "Client ↔ Admin – C-2002")'); if(!title) return;
+    const me = getSession();
+    const db = loadDB();
 
-    const input = prompt('Enter participant emails (comma-separated). Example: client@talampas.com');
-    if(!input) return;
+    let dlg = q('#threadDialog');
+    if (!dlg){
+      dlg = document.createElement('dialog');
+      dlg.id = 'threadDialog';
+      dlg.className = 'dialog';
+      dlg.innerHTML = `
+        <form class="form" id="threadForm">
+          <h3>Start a Conversation</h3>
+          <label><span>Recipient</span>
+            <select id="threadRecipient"></select>
+          </label>
+          <label><span>Related Case (optional)</span>
+            <select id="threadCase"><option value="">— None —</option></select>
+          </label>
+          <label><span>First message</span>
+            <textarea id="threadFirstMsg" rows="3" placeholder="Write a short message… (optional)"></textarea>
+          </label>
+          <div class="actions">
+            <button type="button" class="btn ghost" id="threadCancelBtn">Cancel</button>
+            <button type="submit" class="btn primary">Create</button>
+          </div>
+        </form>`;
+      document.body.appendChild(dlg);
 
-    const rawList = input.split(',').map(s=>s.trim().toLowerCase()).filter(Boolean);
-    const validEmails = db.users.map(u=>u.email);
-    const members = Array.from(new Set([me.email, ...rawList.filter(e=>validEmails.includes(e))]));
+      dlg.querySelector('#threadForm').addEventListener('submit', (e)=>{
+        e.preventDefault();
+        this._createThreadFromDialog();
+      });
+      dlg.querySelector('#threadCancelBtn').addEventListener('click', ()=> dlg.close());
+    }
 
-    if(members.length < 2){ alert('No valid participants found.'); return; }
+    const sel = dlg.querySelector('#threadRecipient');
+    const people = (db.users||[]).filter(u => u.active && u.email !== me.email);
+    sel.innerHTML = people.map(u => `<option value="${u.email}">${u.name} (${u.role})</option>`).join('');
 
-    const id = `T-${(db.threads?.length||0)+1}`;
-    db.threads.push({ id, title, members, messages: [ { id:`M-${Date.now()}`, from: me.email, body:'Started this thread.', ts: Date.now() } ] });
-    saveDB(db); this.renderThreads(); this.openThread(id);
-    pushActivity(`${me.email} created thread "${title}"`);
+    const caseSel = dlg.querySelector('#threadCase');
+    const myCases = (me.role === 'client') ? (db.cases||[]).filter(c => c.clientEmail === me.email) : (db.cases||[]);
+    caseSel.innerHTML = `<option value="">— None —</option>` + myCases.map(c => `<option value="${c.id}">${c.id} • ${c.practice}</option>`).join('');
+
+    dlg.showModal();
   },
 
-  /* Remove conversation ONLY for me (leave/hide) */
-  leaveThread(threadId){
+  _createThreadFromDialog(){
+    const db = loadDB(); const me = getSession();
+    const dlg = q('#threadDialog'); if(!dlg) return;
+    const recipient = dlg.querySelector('#threadRecipient')?.value;
+    const caseId = dlg.querySelector('#threadCase')?.value || '';
+    const firstMsg = (dlg.querySelector('#threadFirstMsg')?.value || '').trim();
+    if (!recipient){ showToast('Please choose a recipient.'); return; }
+
+    const recipUser = db.users.find(u => u.email === recipient);
+    const id = genThreadId();
+    const title = `${me.name} ↔ ${recipUser.name}${caseId?` – ${caseId}`:''}`;
+
+    // Create thread WITHOUT auto message. If user typed a first message, send it; otherwise leave empty.
+    const thread = { id, title, members: [recipient, me.email], messages: [] };
+    (db.threads ||= []).push(thread);
+    saveDB(db);
+
+    dlg.close();
+    this.state.currentThread = id;
+    this.renderThreads();
+    this.openThread(id);
+
+    if (firstMsg){
+      const db2 = loadDB();
+      const t2 = db2.threads.find(x=>x.id===id);
+      t2.messages.push({ id:`M-${Date.now()}`, from: me.email, body: firstMsg, ts: Date.now(), attachments: [], hiddenFor: [] });
+      saveDB(db2);
+      this.openThread(id);
+    }
+
+    pushActivity(`${me.email} started a conversation with ${recipient}${caseId?` about ${caseId}`:''}`);
+  },
+
+  ensureActionButtons(threadId){
+    const head = q('.message-head');
+    if (!head) return;
+
+    // Always clean first, then re-add based on role
+    this.removeActionButtons();
+
+    const leaveBtn = document.createElement('button');
+    leaveBtn.id = 'leaveThreadBtn';
+    leaveBtn.className = 'btn ghost';
+    leaveBtn.textContent = 'Remove from My Inbox';
+    leaveBtn.style.marginLeft = '8px';
+    leaveBtn.title = 'Hide this conversation from your inbox only. Others keep it.';
+    leaveBtn.addEventListener('click', () => this.leaveThread(threadId));
+    const title = q('#threadTitle', head);
+    if (title) title.after(leaveBtn); else head.appendChild(leaveBtn);
+
+    if (getSession()?.role === 'admin'){
+      const delBtn = document.createElement('button');
+      delBtn.id = 'deleteThreadBtn';
+      delBtn.className = 'btn danger';
+      delBtn.textContent = 'Delete Conversation';
+      delBtn.style.marginLeft = '8px';
+      delBtn.title = 'Permanently delete for all participants.';
+      delBtn.addEventListener('click', () => this.deleteThread(threadId));
+      leaveBtn.after(delBtn);
+    }
+  },
+
+  async leaveThread(threadId){
+    const ok = await Confirm.open({
+      title: 'Remove from your inbox?',
+      body: 'Only you will no longer see this conversation. Others keep it.',
+      okText: 'Remove',
+      cancelText: 'Cancel',
+      danger: false
+    });
+    if(!ok) return;
+
     const me = getSession();
     const db = loadDB();
     const t = db.threads.find(x => x.id === threadId);
     if (!t) { showToast('Thread not found.'); return; }
-
     if (!t.members.includes(me.email)) { showToast('You are not a member of this thread.'); return; }
-
-    if (!confirm(`Remove "${t.title}" from your inbox? Other participant(s) will still see it.`)) return;
 
     t.members = (t.members || []).filter(m => m !== me.email);
 
@@ -678,64 +1299,32 @@ const Messages = {
     saveDB(db);
 
     this.state.currentThread = null;
-    q('#threadTitle') && (q('#threadTitle').textContent = 'Select a conversation');
-    const pane = q('#messagePane'); if (pane) pane.innerHTML = '';
-
+    this._resetPane();
     this.renderThreads();
     pushActivity(`${me.email} left conversation "${t.title}"`);
     showToast('Conversation removed from your inbox.');
   },
 
-  /* Admin: delete conversation for ALL members */
-  deleteThreadForEveryone(threadId){
-    const me = getSession();
-    if (me?.role !== 'admin') { showToast('Only Admin can delete for everyone.'); return; }
-
+  async deleteThread(threadId){
+    if (getSession()?.role !== 'admin'){ showToast('Admins only.'); return; }
     const db = loadDB();
-    const t = db.threads.find(x => x.id === threadId);
-    if (!t) { showToast('Thread not found.'); return; }
-
-    if (!confirm(`Delete conversation "${t.title}" for ALL participants? This cannot be undone.`)) return;
-
-    db.threads = (db.threads || []).filter(x => x.id !== threadId);
+    const t = (db.threads||[]).find(x=>x.id===threadId);
+    if (!t) return;
+    const ok = await Confirm.open({
+      title: 'Delete Conversation?',
+      body: 'This will permanently delete the entire conversation for all participants.',
+      okText: 'Delete',
+      cancelText: 'Cancel',
+      danger: true
+    });
+    if(!ok) return;
+    db.threads = (db.threads||[]).filter(x => x.id !== threadId);
     saveDB(db);
-
     this.state.currentThread = null;
-    q('#threadTitle') && (q('#threadTitle').textContent = 'Select a conversation');
-    const pane = q('#messagePane'); if (pane) pane.innerHTML = '';
-
+    this._resetPane();
     this.renderThreads();
-    pushActivity(`${me.email} deleted conversation "${t.title}" for everyone`);
-    showToast('Conversation deleted for everyone.');
-  },
-
-  /* Buttons in message header */
-  ensureActionButtons(threadId){
-    const me = getSession();
-    const head = q('.message-head');
-    if (!head) return;
-
-    q('#leaveThreadBtn')?.remove();
-    q('#deleteThreadBtn')?.remove();
-
-    const leaveBtn = document.createElement('button');
-    leaveBtn.id = 'leaveThreadBtn';
-    leaveBtn.className = 'btn ghost';
-    leaveBtn.textContent = 'Remove from My Inbox';
-    leaveBtn.style.marginLeft = '8px';
-    leaveBtn.addEventListener('click', () => this.leaveThread(threadId));
-    const title = q('#threadTitle', head);
-    if (title) title.after(leaveBtn); else head.appendChild(leaveBtn);
-
-    if (me?.role === 'admin'){
-      const delBtn = document.createElement('button');
-      delBtn.id = 'deleteThreadBtn';
-      delBtn.className = 'btn danger';
-      delBtn.textContent = 'Delete for Everyone';
-      delBtn.style.marginLeft = '8px';
-      delBtn.addEventListener('click', () => this.deleteThreadForEveryone(threadId));
-      leaveBtn.after(delBtn);
-    }
+    pushActivity(`${getSession().email} deleted conversation "${t.title}"`);
+    showToast('Conversation deleted.');
   }
 };
 
@@ -748,13 +1337,18 @@ const Users = {
 
   renderTable(){
     const db = loadDB(); const tbody = q('#userTable tbody'); if(!tbody) return; tbody.innerHTML = '';
-    db.users.forEach(u => {
+    (db.users||[]).forEach(u => {
+      const pres = Presence.get(u.email);
+      const presLabel = pres.state[0].toUpperCase() + pres.state.slice(1);
+      const presHtml = `${Presence.dot(pres.state)}<span class="hint">${presLabel}${pres.ts ? ` • ${timeAgo(pres.ts)}` : ''}</span>`;
+      const acct = u.active? 'Active':'Disabled';
+
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${u.name}</td>
         <td>${u.email}</td>
         <td>${u.role}</td>
-        <td>${u.active? 'Active':'Disabled'}</td>
+        <td>${acct} ${presHtml}</td>
         <td class="right">
           <button class="btn edit">Edit</button>
           <button class="btn ${u.active ? 'danger' : ''} toggle">${u.active? 'Disable':'Enable'}</button>
@@ -767,7 +1361,6 @@ const Users = {
     });
   },
 
-  /* Build the "Assign Case optional" options: - show cases with no assignee OR in Pending Review*/
   populateAssignableCases(selectEl){
     const db = loadDB();
     const candidates = (db.cases||[])
@@ -781,7 +1374,6 @@ const Users = {
     const db = loadDB(); const dlg = q('#userDialog'); const isEdit = !!id;
     q('#userDialogTitle') && (q('#userDialogTitle').textContent = isEdit? 'Edit User' : 'New User');
 
-    // Populate assignable cases each time dialog opens
     const assignSel = q('#assignCaseForUser');
     if (assignSel) this.populateAssignableCases(assignSel);
 
@@ -801,6 +1393,20 @@ const Users = {
       if (assignSel) assignSel.value = '';
       dlg.returnValue = '';
     }
+
+    // --- Reset PIN field (auto-append once) ---
+    let pinRow = q('#userResetPinRow');
+    if (!pinRow) {
+      pinRow = document.createElement('label');
+      pinRow.id = 'userResetPinRow';
+      pinRow.innerHTML = `<span>Reset PIN</span>
+        <input type="text" id="userResetPin" placeholder="e.g., 1234" minlength="4" maxlength="8" />`;
+      const actions = q('#userDialog .actions') || q('#userDialog');
+      actions.before(pinRow);
+    }
+    const u0 = isEdit ? db.users.find(x=>x.id===id) : null;
+    q('#userResetPin').value = isEdit ? (u0.resetPin || '') : '';
+
     dlg.showModal();
   },
 
@@ -815,7 +1421,10 @@ const Users = {
       active: true 
     };
 
-    // Create or update user
+    const pinVal = (q('#userResetPin')?.value || '').trim();
+    if (pinVal) p.resetPin = pinVal;
+    if (!isEditId && !p.resetPin) p.resetPin = '0000';
+
     let targetUser;
     if(isEditId){ 
       const i = db.users.findIndex(u=>u.id===isEditId); 
@@ -829,7 +1438,6 @@ const Users = {
       pushActivity(`${getSession().email} added user ${p.email}`);
     }
 
-    // Optional immediate assignment
     const assignCaseId = (q('#assignCaseForUser')?.value || '').trim();
     if (assignCaseId){
       const c = db.cases.find(x => x.id === assignCaseId);
@@ -843,6 +1451,7 @@ const Users = {
     saveDB(db); dlg.close(); 
     this.renderTable();
     Cases.renderTable();
+    Messages.renderThreads();
     Dashboard.update();
   },
 
@@ -851,14 +1460,22 @@ const Users = {
     u.active = !u.active; saveDB(db); this.renderTable(); pushActivity(`${getSession().email} ${u.active? 'enabled':'disabled'} ${u.email}`);
   },
 
-  remove(id){
+  async remove(id){
     const db = loadDB();
     const me = getSession();
     const victim = db.users.find(u => u.id === id);
     if(!victim) return;
-    if(victim.email === me.email){ alert("You can't delete your own account while logged in."); return; }
-    if(victim.email === 'admin@talampas.com'){ alert("Built-in admin cannot be deleted."); return; }
-    if(!confirm(`Permanently delete ${victim.name} (${victim.email})? This cannot be undone.`)) return;
+    if(victim.email === me.email){ showToast("You can't delete your own account while logged in."); return; }
+    if(victim.email === 'admin@talampas.com'){ showToast("Built-in admin cannot be deleted."); return; }
+
+    const ok = await Confirm.open({
+      title: `Delete ${victim.name}?`,
+      body: `This will permanently delete ${victim.email}. This cannot be undone.`,
+      okText: 'Delete',
+      cancelText: 'Cancel',
+      danger: true
+    });
+    if(!ok) return;
 
     db.users = db.users.filter(u => u.id !== id);
 
@@ -883,11 +1500,11 @@ const Users = {
     Cases.renderTable();
     Messages.renderThreads();
     Dashboard.update();
+    showToast('User deleted.');
   }
 };
 
 /* ---------- Appointments (booking → case) ---------- */
-/* Country calling codes and required local digit lengths */
 const PHONE_COUNTRIES = [
   { name: 'Philippines', code: '+63',  localLen: 10, example: '9123456789' },
   { name: 'Saudi Arabia', code: '+966', localLen: 9,  example: '5XXXXXXXX' },
@@ -898,7 +1515,6 @@ const PHONE_COUNTRIES = [
   { name: 'Vietnam', code: '+84',    localLen: 9, example: '912345678' },
   { name: 'Thailand', code: '+66',   localLen: 9, example: '812345678' },
 ];
-
 function getPhoneRuleByCode(code){
   return PHONE_COUNTRIES.find(c => c.code === code) || PHONE_COUNTRIES[0];
 }
@@ -910,30 +1526,23 @@ const Appointments = {
       this.create();
     });
 
-    // Build / enhance the phone UI
     const sel = q('#phoneCountry');
     const pref = q('#phonePrefix');
     const local = q('#phoneLocal');
     const hint = (q('#phoneLocal')?.closest('label')?.querySelector('small.hint')) || null;
 
     if (sel){
-      // Populate the select with supported countries (keep current selection if any)
       const current = sel.value || '+63';
       sel.innerHTML = PHONE_COUNTRIES
         .map(c => `<option value="${c.code}" ${c.code===current?'selected':''}>${c.name} (${c.code})</option>`)
         .join('');
-
-      // Ensure prefix & input constraints reflect current selection
       this._applyPhoneRule(sel.value, pref, local, hint);
-
       sel.addEventListener('change', () => {
         this._applyPhoneRule(sel.value, pref, local, hint);
-        // Clear typed digits when changing country to avoid invalid leftovers
         if (local) local.value = '';
       });
     }
 
-    // Numeric-only filter for the local part
     if (local){
       local.addEventListener('input', () => {
         const rule = getPhoneRuleByCode(sel?.value || '+63');
@@ -948,7 +1557,6 @@ const Appointments = {
     if (localEl){
       localEl.maxLength = rule.localLen;
       localEl.placeholder = rule.example || ''.padStart(rule.localLen, '•');
-      // If input already has more digits than allowed, trim it
       localEl.value = (localEl.value || '').replace(/\D/g,'').slice(0, rule.localLen);
     }
     if (hintEl) hintEl.textContent = `Enter exactly ${rule.localLen} digit(s) after ${rule.code}.`;
@@ -956,9 +1564,8 @@ const Appointments = {
 
   create(){
     const db = loadDB();
-    const me = getSession(); // client
+    const me = getSession();
 
-    // Phone validation — multi-country
     const countryCode = (q('#phoneCountry')?.value || '+63').trim();
     const rule = getPhoneRuleByCode(countryCode);
     const localRaw = (q('#phoneLocal')?.value || '').trim().replace(/\D/g,'');
@@ -991,7 +1598,6 @@ const Appointments = {
     showToast(`Appointment sent. Case ${caseId} is now Pending Review.`);
     q('#appointmentForm').reset();
 
-    // Restore phone UI to default (PH)
     const sel = q('#phoneCountry');
     const pref = q('#phonePrefix');
     const local = q('#phoneLocal');
@@ -1049,26 +1655,10 @@ function createCaseFromAppointment(p, me, db){
     });
   }
 
-  ensureAdminThreadForCase(db, id, me.email);
-
   pushActivity(`${me.email} submitted booking -> created case ${id} (Pending Review).`);
   return id;
 }
-function ensureAdminThreadForCase(db, caseId, clientEmail){
-  const adminEmail = 'admin@talampas.com';
-  const title = `Admin ↔ Client – ${caseId}`;
-  const exists = (db.threads||[]).some(t => t.title === title);
-  if (exists) return;
-
-  (db.threads ||= []).push({
-    id: `T-${(db.threads?.length||0)+1}`,
-    title,
-    members: [adminEmail, clientEmail],
-    messages: [
-      { id:`M-${Date.now()}`, from: adminEmail, body:`We received your request for ${caseId}. We'll review and assign it shortly.`, ts: Date.now() }
-    ]
-  });
-}
+function ensureAdminThreadForCase(db, caseId, clientEmail){ /* disabled */ }
 
 /* ---------- Global Search ---------- */
 const GlobalSearch = {
@@ -1111,7 +1701,7 @@ const GlobalSearch = {
   }
 };
 
-/* ---------- Import / Export JSON ---------- */
+/* ---------- Import / Export JSON (buttons hidden for all roles) ---------- */
 const ImportExport = {
   init(){
     q('#exportDataBtn')?.addEventListener('click', ()=> this.export());
@@ -1131,15 +1721,17 @@ const ImportExport = {
   },
 
   import(e){
-    const file = e.target.files[0]; if(!file) return;
+    const file = e.target.files?.[0]; if(!file) return;
     const reader = new FileReader();
     reader.onload = () => {
       try {
         const data = JSON.parse(reader.result);
         if(!data.users || !data.cases){ alert('Invalid file.'); return; }
+        if (!Array.isArray(data.availability)) data.availability = [];
         localStorage.setItem(DB_KEY, JSON.stringify(data));
+        localStorage.setItem(DB_REV_KEY, String(Date.now()));
         showToast('Data imported.');
-        Dashboard.update(); Cases.renderTable(); Calendar.render(); Messages.renderThreads(); Users.renderTable(); Appointments.renderTable();
+        Dashboard.update(); Cases.renderTable(); Calendar.render(); Availability.renderTable(); Messages.renderThreads(); Users.renderTable(); Appointments.renderTable();
       } catch(err){ alert('Import failed.'); }
     };
     reader.readAsText(file);
@@ -1150,3 +1742,188 @@ const ImportExport = {
 function escapeHtml(str){
   return str.replace(/[&<>\"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
+
+/* ---------- Helper functions for Availability ---------- */
+function listActiveStaff(){
+  const db = loadDB();
+  return (db.users||[]).filter(u => u.active && (u.role==='admin' || u.role==='employee'));
+}
+function findUserName(email){
+  const db = loadDB();
+  return (db.users||[]).find(u => u.email === email)?.name || email || '—';
+}
+
+/* ========================================================================
+   Availability Module (global list, unlimited slots, Add button always for admin)
+   ======================================================================== */
+const Availability = {
+  state: { editId: null },
+
+  init(){
+    this.ensureAddButton();
+
+    q('#availForm')?.addEventListener('submit', (e)=>{ e.preventDefault(); this.saveFromDialog(); });
+    q('#cancelAvailBtn')?.addEventListener('click', ()=> q('#availDialog')?.close());
+    q('#deleteAvailBtn')?.addEventListener('click', ()=> this.remove());
+
+    this.renderTable();
+  },
+
+  ensureAddButton(){
+    const role = getSession()?.role;
+    const card = q('#route-availability .card');
+    if (!card) return;
+
+    let btn = q('#newAvailBtn');
+
+    if (!btn){
+      const toolbar = document.createElement('div');
+      toolbar.className = 'toolbar';
+      toolbar.innerHTML = `
+        <div class="left"><h3>Availability</h3></div>
+        <div class="right"><button class="btn primary" id="newAvailBtn">Add Availability</button></div>
+      `;
+      const firstChild = card.firstElementChild;
+      if (firstChild && !firstChild.matches('.toolbar')) {
+        card.insertBefore(toolbar, firstChild);
+      } else if (!firstChild) {
+        card.appendChild(toolbar);
+      }
+      btn = toolbar.querySelector('#newAvailBtn');
+    }
+
+    if (btn && !btn._bound){
+      btn.addEventListener('click', () => this.openDialog());
+      btn._bound = true;
+    }
+
+    if (btn) btn.style.display = (role === 'admin') ? 'inline-flex' : 'none';
+  },
+
+  openDialog(editId=null){
+    const dlg = q('#availDialog'); if(!dlg) return;
+    const isEdit = !!editId;
+    this.state.editId = editId;
+
+    q('#availDialogTitle').textContent = isEdit ? 'Edit Availability' : 'Add Availability';
+    q('#deleteAvailBtn')?.classList.toggle('hidden', !isEdit);
+
+    const people = listActiveStaff();
+    const sel = q('#availUser');
+    if (sel) sel.innerHTML = people.map(u => `<option value="${u.email}">${u.name} (${u.role})</option>`).join('');
+    if (!people.length){ showToast('No active attorneys/staff. Add users first.'); return; }
+
+    if (isEdit){
+      const db = loadDB();
+      const slot = (db.availability||[]).find(a => a.id === editId);
+      if (!slot) return;
+      q('#availUser').value     = slot.user;
+      q('#availDateField').value= slot.date;
+      q('#availFrom').value     = slot.from;
+      q('#availTo').value       = slot.to;
+      q('#availStatus').value   = slot.status;
+      q('#availNotes').value    = slot.notes || '';
+    } else {
+      q('#availUser').value     = people[0]?.email || '';
+      q('#availDateField').value= localISO();
+      q('#availFrom').value     = '09:00';
+      q('#availTo').value       = '12:00';
+      q('#availStatus').value   = 'Available';
+      q('#availNotes').value    = '';
+    }
+
+    dlg.showModal();
+  },
+
+  saveFromDialog(){
+    const db = loadDB(); const me = getSession();
+    if (me?.role !== 'admin'){ showToast('Admins only.'); return; }
+
+    const p = {
+      user:   (q('#availUser')?.value || '').trim(),
+      date:   (q('#availDateField')?.value || '').trim(),
+      from:   (q('#availFrom')?.value || '').trim(),
+      to:     (q('#availTo')?.value || '').trim(),
+      status: (q('#availStatus')?.value || '').trim(),
+      notes:  (q('#availNotes')?.value || '').trim()
+    };
+
+    if (!p.user || !p.date){ showToast('Please pick a date and staff.'); return; }
+    if (!p.from || !p.to){ showToast('Please set start and end time.'); return; }
+    if (p.from >= p.to){ showToast('End time must be after start time.'); return; }
+
+    if (this.state.editId){
+      const i = (db.availability||[]).findIndex(a => a.id === this.state.editId);
+      if (i >= 0) db.availability[i] = { ...db.availability[i], ...p };
+      pushActivity(`${me.email} edited availability for ${p.user} (${p.date} ${p.from}-${p.to}).`);
+    } else {
+      const id = this.genId(db);
+      (db.availability ||= []).push({ id, ...p });
+      pushActivity(`${me.email} added availability for ${p.user} (${p.date} ${p.from}-${p.to}).`);
+    }
+
+    saveDB(db);
+
+    q('#availDialog')?.close();
+    this.renderTable();
+    Dashboard.update();
+  },
+
+  async remove(){
+    if (!this.state.editId) return;
+    const ok = await Confirm.open({
+      title: 'Delete Availability?',
+      body: 'This will remove the selected slot.',
+      okText: 'Delete',
+      cancelText: 'Cancel',
+      danger: true
+    });
+    if(!ok) return;
+
+    const db = loadDB(); const me = getSession();
+    db.availability = (db.availability||[]).filter(a => a.id !== this.state.editId);
+    saveDB(db);
+    q('#availDialog').close();
+    pushActivity(`${me.email} deleted an availability slot.`);
+    this.renderTable();
+    Dashboard.update();
+  },
+
+  renderTable(){
+    const tbody = q('#availTable tbody'); if (!tbody) return;
+    const role = getSession()?.role;
+    const db = loadDB();
+
+    const rows = (db.availability||[])
+      .slice()
+      .sort((a,b) => (a.date===b.date ? (a.from+a.user).localeCompare(b.from+b.user) : b.date.localeCompare(a.date)));
+
+    tbody.innerHTML = '';
+    if (!rows.length){
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td colspan="${role==='admin'?6:5}" class="hint">No availability set yet.</td>`;
+      tbody.appendChild(tr);
+    } else {
+      rows.forEach(a => {
+        const tr = document.createElement('tr');
+        const statusClass = a.status === 'Available' ? 'avail' : 'unavail';
+        tr.innerHTML = `
+          <td>${findUserName(a.user)}<div class="hint">${a.user}</div></td>
+          <td>${a.date}</td>
+          <td>${a.from}</td>
+          <td>${a.to}</td>
+          <td><span class="badge ${statusClass}">${a.status}</span>${a.notes? ` <span class="hint">• ${escapeHtml(a.notes)}</span>`:''}</td>
+          ${role==='admin' ? `<td class="right"><button class="btn edit">Edit</button></td>` : ``}
+        `;
+        if (role==='admin'){
+          tr.querySelector('.edit')?.addEventListener('click', ()=> this.openDialog(a.id));
+        }
+        tbody.appendChild(tr);
+      });
+    }
+
+    this.ensureAddButton();
+  },
+
+  genId(db){ return `A-${(db.availability?.length||0)+1}`; }
+};
