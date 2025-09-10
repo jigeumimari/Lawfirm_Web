@@ -15,7 +15,9 @@
   <script defer src="script.js"></script>
   <script defer src="script_user_submit_patch.js"></script>
   <script defer src="script_case_final.js"></script>
-<script defer src="script_dashboard_button_only.js"></script>
+  <script defer src="script_dashboard_button_only.js"></script>
+  <script defer src="script_messages_fix.js"></script>
+  
 
 
 </head>
@@ -141,16 +143,17 @@
 
       <!-- ===================== ROUTE: Calendar ===================== -->
       <div id="route-calendar" class="route" data-title="Scheduling">
-        <div class="card">
-          <div class="calendar-controls">
-            <button class="btn" id="prevMonthBtn">◀</button>
-            <h3 id="calendarTitle" title="Click to jump to a month">—</h3>
-            <button class="btn" id="nextMonthBtn">▶</button>
-            <button class="btn primary only-admin only-employee" id="newEventBtn">Add Event</button>
-          </div>
-          <div id="calendarGrid" class="calendar-grid" role="grid" aria-label="Monthly calendar"></div>
-        </div>
-      </div>
+  <div class="card">
+    <div class="calendar-controls">
+      <button class="btn" id="prevMonthBtn">◀</button>
+      <h3 id="calendarTitle">—</h3>
+      <button class="btn" id="nextMonthBtn">▶</button>
+      <button class="btn primary only-admin" id="newEventBtn">Add Event</button>
+    </div>
+    <div id="calendarGrid" class="calendar-grid" role="grid"></div>
+  </div>
+</div>
+
 
       <!-- ===================== ROUTE: Availability (ONE LIST) ===================== -->
       <div id="route-availability" class="route" data-title="Availability">
