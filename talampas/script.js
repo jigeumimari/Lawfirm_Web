@@ -1,6 +1,4 @@
-/* ==========================================================
-   Talampas & Associates — FULL FRONTEND SCRIPT (ALL FIXES)
-   ========================================================== */
+/* Talampas & Associates GUMANA KA NAMAN HAUP*/
 
 /* ---------- DOM helpers ---------- */
 const q  = (sel, ctx=document) => ctx.querySelector(sel);
@@ -72,7 +70,7 @@ function enterApp(user){
   // Initial loads
   refreshCases();
   refreshAppointments();
-  refreshEvents();
+  
 }
 
 /* Route switching */
@@ -220,6 +218,30 @@ async function refreshEvents(){
     renderCalendarGrid(_calBase, list);
   } catch(e){ console.error(e); }
 }
+
+/* --- calendar route bootstrap (paste below refreshEvents/submitEvent) --- */
+let __calWired = false;
+
+function ensureCalendar(){
+  // wire the month controls once
+  if (!__calWired){
+    __calWired = true;
+
+    on(q('#prevMonthBtn'),'click', ()=>{
+      _calBase = new Date(_calBase.getFullYear(), _calBase.getMonth()-1, 1);
+      refreshEvents();
+    });
+    on(q('#nextMonthBtn'),'click', ()=>{
+      _calBase = new Date(_calBase.getFullYear(), _calBase.getMonth()+1, 1);
+      refreshEvents();
+    });
+    on(q('#calendarTitle'),'click', ()=> q('#monthPicker')?.showModal());
+  }
+
+  // whenever you land on Scheduling, (re)render that month
+  refreshEvents();
+}
+
 async function submitEvent(e){
   e?.preventDefault();
 
@@ -364,17 +386,31 @@ async function openThread(id){
   q('#threadTitle') && (q('#threadTitle').textContent = 'Thread #' + ACTIVE_THREAD_ID);
   await refreshMessages();
 }
-async function refreshMessages(){
+
+async function refreshMessages(scrollToBottom=false){
   const pane = q('#messagePane'); if (!pane || !ACTIVE_THREAD_ID) return;
+
+  const atBottom = (pane.scrollHeight - pane.scrollTop - pane.clientHeight) < 48;
+
   try {
-    const msgs = await api(`messages.php?thread_id=${ACTIVE_THREAD_ID}`);
+    const raw = await api(`messages.php?thread_id=${ACTIVE_THREAD_ID}`);
+    const msgs = Array.isArray(raw) ? raw : (raw.items || raw.messages || raw.data || []);
+
     pane.innerHTML = msgs.map(m => `
-      <div class="msg ${m.sender_role}"><b>${m.sender_name}</b>: ${m.body}
-        <div class="meta">${new Date(m.created_at).toLocaleString()}</div>
+      <div class="msg ${m.sender_role || ''}">
+        <div><b>${m.sender_name || 'User'}</b>: ${m.body || ''}</div>
+        <div class="meta">${m.created_at ? new Date(m.created_at).toLocaleString() : ''}</div>
       </div>
     `).join('');
-  } catch(e){ console.error(e); }
+
+    if (scrollToBottom || atBottom) pane.scrollTop = pane.scrollHeight;
+  } catch(e){
+    console.error('messages load failed:', e);
+    pane.innerHTML = `<div style="opacity:.6;padding:16px">Couldn’t load messages.</div>`;
+  }
 }
+
+
 async function submitMessage(e){
   e?.preventDefault();
   const inp = q('#messageInput'); if (!inp || !ACTIVE_THREAD_ID) return;
@@ -415,6 +451,7 @@ async function submitThread(e){
 function onRouteEnter(name){
   if (name==='users') refreshUsers();
   if (name==='messages') refreshThreads();
+  if (name==='calendar')  ensureCalendar(); 
 }
 const __oldRouteTo = routeTo;
 routeTo = function(name){ __oldRouteTo(name); onRouteEnter(name); };
@@ -480,3 +517,149 @@ window.addEventListener('DOMContentLoaded', async () => {
   if (resumed && resumed.id) { enterApp(resumed); }
   else { showLogin(); }
 });
+
+/* ==========================================================
+   MESSAGES: SAFE OVERRIDE (append at end of script.js)
+   - Tolerates many backend JSON shapes
+   - Never throws on empty/odd responses
+   ========================================================== */
+(function(){
+  function shapeMsgCompat(m){
+    return {
+      id:            m && (m.id),
+      thread_id:     (m && (m.thread_id || m.tid || m.thread)) || null,
+      sender_id:     (m && (m.sender_id || m.user_id || m.uid)) || null,
+      sender_name:   (m && (m.sender_name || m.name || m.full_name)) || 'User',
+      sender_email:  (m && (m.sender_email || m.email)) || null,
+      sender_role:   (m && (m.sender_role || m.role)) || '',
+      body:          (m && (m.body != null ? m.body
+                                 : (m.message != null ? m.message
+                                 : (m.content != null ? m.content
+                                 : (m.text    != null ? m.text : ''))))) || '',
+      created_at:    (m && (m.created_at || m.ts || m.time || m.sent_at)) || null
+    };
+  }
+
+  async function refreshMessagesCompat(scrollToBottom){
+    var pane = document.querySelector('#messagePane');
+    if (!pane || !window.ACTIVE_THREAD_ID) return;
+
+    // keep sticky-bottom behavior
+    var atBottom = (pane.scrollHeight - pane.scrollTop - pane.clientHeight) < 48;
+
+    try {
+      var raw = await api('messages.php?thread_id=' + window.ACTIVE_THREAD_ID);
+      // Accept many response shapes: {items:[]}, {messages:[]}, {data:[]}, [], etc.
+      var arr = Array.isArray(raw)
+        ? raw
+        : (raw && (raw.items || raw.messages || raw.data || raw.results)) || [];
+
+      var msgs = arr.map(shapeMsgCompat);
+      var ses  = (typeof getSession === 'function' ? (getSession() || {}) : {});
+
+      if (!msgs.length) {
+        pane.innerHTML = '<div style="opacity:.6;padding:16px">No messages yet. Say hi 👋</div>';
+        return;
+      }
+
+      var html = msgs.map(function(m){
+        // Robust "mine" detection: id → email → exact name
+        var mine =
+          (m.sender_id && ses.id && Number(m.sender_id) === Number(ses.id)) ||
+          (m.sender_email && ses.email &&
+            String(m.sender_email).toLowerCase() === String(ses.email).toLowerCase()) ||
+          (m.sender_name && ses.name &&
+            String(m.sender_name) === String(ses.name));
+
+        var role = m.sender_role || '';
+        var cls  = 'msg' + (role ? (' ' + role) : '') + (mine ? ' me' : '');
+        var when = m.created_at ? new Date(m.created_at).toLocaleString() : '';
+        var text = (m.body || '').toString().replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+        return (
+          '<div class="' + cls + '">'+
+            '<div><b>' + (m.sender_name || 'User') + '</b>: ' + text + '</div>'+
+            '<div class="meta">' + when + '</div>'+
+          '</div>'
+        );
+      }).join('');
+
+      pane.innerHTML = html;
+      if (scrollToBottom || atBottom) pane.scrollTop = pane.scrollHeight;
+    } catch (e){
+      console.error('messages.php GET failed', e);
+      pane.innerHTML = '<div style="opacity:.6;padding:16px">Couldn’t load messages.</div>';
+    }
+  }
+  
+  // Override globals safely
+  window.shapeMsg = shapeMsgCompat;
+  window.refreshMessages = refreshMessagesCompat;
+})();
+
+//PARA GUMANA MESSAGE LINTEK
+(function(){
+  const q  = (s,c=document)=>c.querySelector(s);
+  const qa = (s,c=document)=>Array.from(c.querySelectorAll(s));
+
+  let __messagesBootstrapped = false;
+
+  function initMessagesUI(){
+    if (__messagesBootstrapped) return;
+    __messagesBootstrapped = true;
+
+    // Delegated click/keyboard on the thread list so it keeps working after re-renders
+    const list = q('#threadList');
+    if (list) {
+      list.addEventListener('click', (e)=>{
+        const li = e.target.closest('.thread-item');
+        if (!li) return;
+        openThread(li.dataset.id);
+      });
+      list.addEventListener('keydown', (e)=>{
+        if (e.key === 'Enter' || e.key === ' ') {
+          const li = e.target.closest('.thread-item');
+          if (li) { e.preventDefault(); openThread(li.dataset.id); }
+        }
+      });
+    }
+
+    // Initial load of threads; will render the list
+    if (typeof refreshThreads === 'function') {
+      refreshThreads().then(()=>{
+        // Auto-open the first thread if none is active
+        if (!window.ACTIVE_THREAD_ID) {
+          const first = q('#threadList .thread-item');
+          if (first) openThread(first.dataset.id);
+        }
+      });
+    }
+
+    // Start light polling while you’re on Messages (if these exist)
+    if (typeof startMessagesLoop === 'function') startMessagesLoop();
+  }
+
+  // 1) Initialize when user clicks the Messages nav button
+  const messagesNav = qa('.nav-btn').find(b => b.dataset.route === 'messages');
+  if (messagesNav) {
+    messagesNav.addEventListener('click', () => {
+      // give your router a tick to swap views, then init
+      setTimeout(initMessagesUI, 0);
+    });
+  }
+
+  // 2) If Messages is already the visible route on load, init immediately
+  if (q('#route-messages')?.classList.contains('active')) {
+    initMessagesUI();
+  }
+
+  // 3) Fallback: if your app exposes routeTo, piggyback without replacing it
+  if (typeof window.routeTo === 'function' && !window.__messagesRouteWrapped) {
+    window.__messagesRouteWrapped = true;
+    const _rt = window.routeTo;
+    window.routeTo = function(name){
+      _rt(name);
+      if (name === 'messages') setTimeout(initMessagesUI, 0);
+    };
+  }
+})();
