@@ -362,3 +362,106 @@ input[type="time"] {
 
 .badge.avail { border-color:#14532d; color:#bbf7d0; background:#0e1f14; }
 .badge.unavail { border-color:#7f1d1d; color:#fecaca; background:#2a0e12; }
+
+/* ===== Messages responsive polish ===== */
+#route-messages .grid.grid-2 {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 900px) {
+  #route-messages .grid.grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Thread list */
+.threads {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: calc(100vh - 280px);
+  overflow: auto;
+}
+.thread-item {
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(0,0,0,.06);
+  cursor: pointer;
+}
+.thread-item:hover { background: rgba(0,0,0,.03); }
+.thread-item.active { background: rgba(0,0,0,.06); }
+.thread-item .title { font-weight: 600; margin-bottom: 2px; }
+.thread-item .sub { font-size: 12px; opacity: .75; }
+.thread-item .time { font-size: 11px; opacity: .6; float: right; }
+
+/* Message pane */
+.messages {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: calc(100vh - 340px);
+  overflow: auto;
+  padding: 12px;
+}
+.msg {
+  display: inline-block;
+  padding: 10px 12px;
+  border-radius: 12px;
+  max-width: 85%;
+  background: #dc06e4;
+}
+.msg .meta { font-size: 11px; opacity: .6; margin-top: 4px; }
+.msg.admin, .msg.employee { align-self: flex-start; }
+.msg.client { align-self: flex-start; }
+.msg.me {
+  align-self: flex-end;
+  background: #e9f1ff;
+}
+
+/* Composer sticks to bottom */
+.message-form {
+  display: flex;
+  gap: 8px;
+  padding: 10px;
+  border-top: 1px solid rgba(0,0,0,.06);
+  position: sticky;
+  bottom: 0;
+  background: white;
+}
+.message-form input {
+  flex: 1;
+  min-height: 40px;
+}
+
+/* ==== Messages: LEFT-ALIGNED (reset) ==== */
+#route-messages .messages {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  color: #e9ecf1;                 /* readable on the dark pane */
+}
+
+#route-messages .msg {
+  align-self: flex-start;          /* always left */
+  max-width: 85%;
+  background: #f5f6f8;
+  color: #111;
+  padding: 10px 12px;
+  border-radius: 12px;
+}
+
+#route-messages .msg .meta {
+  font-size: 11px;
+  opacity: .6;
+  margin-top: 4px;
+  text-align: left;                /* left meta */
+}
+
+/* Neutralize any previous right-align rule */
+#route-messages .msg.me {
+  align-self: flex-start !important;
+  margin-left: 0 !important;
+  background: #f5f6f8;
+  border: none;
+}
