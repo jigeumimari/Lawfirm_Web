@@ -1,0 +1,818 @@
+/* ---- Theme tokens ---- */
+:root {
+  --bg: #0b1020;
+  --panel: #11182f;
+  --muted: #8b96b7;
+  --text: #e7ecff;
+  --brand: #5b8cff;
+  --brand-2: #6ee7b7;
+  --danger: #ef4444;
+  --ok: #22c55e;
+  --warn: #f59e0b;
+  --ring: 0 0 0 3px rgba(91, 140, 255, .35);
+  --radius: 16px;
+  --shadow: 0 10px 30px rgba(0, 0, 0, .35);
+}
+
+/* ---- Base ---- */
+* { box-sizing: border-box }
+html, body { height: 100% }
+body {
+  margin: 0;
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  background:
+    radial-gradient(1200px 600px at 10% -10%, #740097, transparent),
+    radial-gradient(1400px 720px at 95% 115%, rgba(116,0,151,.9), transparent),
+    var(--bg);
+  color: var(--text);
+}
+.hidden { display: none !important }
+
+/* ---- Toast ---- */
+.toast {
+  position: fixed;
+  inset: auto 24px 24px auto;
+  background: #0f1530;
+  color: var(--text);
+  padding: 12px 16px;
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  opacity: 0;
+  transform: translateY(16px);
+  transition: .3s;
+  pointer-events: none;
+  z-index: 1000;
+}
+.toast.show { opacity: 1; transform: translateY(0) }
+
+/* ---- Views ---- */
+.view { display: none }
+.view.active { display: grid; place-items: center; min-height: 100vh; padding: 24px }
+
+/* ---- Auth / Branding ---- */
+.auth-card {
+  width: 100%;
+  max-width: 880px;
+  background: linear-gradient(180deg, rgba(255,255,255,.04), transparent), var(--panel);
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: var(--radius);
+  padding: 32px;
+  box-shadow: var(--shadow);
+}
+.brand { display: flex; gap: 20px; align-items: center; margin-bottom: 20px }
+.subtitle { color: var(--muted); margin: 4px 0 0 }
+
+/* Logo with purple background */
+.logo {
+  width: 100px; height: 100px;
+  display: block;
+  object-fit: contain;
+  border-radius: 20px;
+  background: #53008a;
+  padding: 8px;
+}
+.logo.small { width: 64px; height: 64px; border-radius: 14px }
+
+/* ---- Forms & Buttons ---- */
+.form { display: grid; gap: 16px }
+.form label { display: grid; gap: 8px; font-weight: 600; color: var(--text) }
+.form input, .form select, .form textarea {
+  background: #0e1530;
+  border: 1px solid rgba(255,255,255,.08);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 12px 14px;
+  outline: none;
+}
+.form input:focus, .form select:focus, .form textarea:focus {
+  box-shadow: var(--ring);
+  border-color: #2a3a7a;
+}
+
+.btn {
+  background: #1a2246;
+  border: 1px solid rgba(255,255,255,.08);
+  color: var(--text);
+  border-radius: 12px;
+  padding: 10px 14px;
+  cursor: pointer;
+  font-weight: 600;
+}
+.btn:hover { filter: brightness(1.1) }
+.btn.primary {
+  background: linear-gradient(135deg, var(--brand), #8bb3ff);
+  color: #0b1020;
+  border: none;
+}
+.btn.ghost { background: transparent; border-color: rgba(255,255,255,.18) }
+.btn.danger { background: #3a0b12; border-color: #7f1d1d; color: #fecaca }
+.hint { color: var(--muted); font-size: 14px }
+
+/* ---- App Shell ---- */
+.app-shell { display: grid; grid-template-columns: 280px 1fr; min-height: 100vh }
+.sidebar {
+  background: linear-gradient(180deg, rgba(255,255,255,.03), transparent), #0f142b;
+  border-right: 1px solid rgba(255,255,255,.06);
+  padding: 16px;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 12px;
+}
+.sidebar-header {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 6px 6px 14px;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+.firm { font-weight: 700 }
+.role-badge { margin-top: 4px; font-size: 12px; color: #a5b4fc }
+.nav-btn {
+  width: 100%;
+  text-align: left;
+  padding: 12px;
+  border-radius: 10px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+.nav-btn:hover, .nav-btn.active { background: #12193b; border-color: rgba(255,255,255,.08) }
+.sidebar-footer { border-top: 1px solid rgba(255,255,255,.06); padding-top: 12px }
+
+.content { display: grid; grid-template-rows: auto 1fr }
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  backdrop-filter: blur(6px);
+  position: sticky;
+  top: 0;
+  background: rgba(10,14,30,.6);
+}
+.search { display: flex; gap: 8px; align-items: center }
+.search input { min-width: 320px }
+.account { display: flex; align-items: center; gap: 8px; color: var(--muted) }
+.account .dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--ok);
+  display: inline-block;
+}
+
+.route { display: none; padding: 20px }
+.route.active { display: block }
+
+.grid { display: grid; gap: 16px }
+.grid-2 { grid-template-columns: repeat(2, minmax(0,1fr)) }
+.grid-3 { grid-template-columns: repeat(3, minmax(0,1fr)) }
+@media (max-width:1000px) {
+  .grid-3 { grid-template-columns: 1fr }
+  .app-shell { grid-template-columns: 92px 1fr }
+  .nav-btn span { display: none }
+  .search input { min-width: 180px }
+}
+@media (max-width:760px) {
+  .grid-2 { grid-template-columns: 1fr }
+}
+
+/* ---- Cards / Tables ---- */
+.card {
+  background: linear-gradient(180deg, rgba(255,255,255,.03), transparent), var(--panel);
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: var(--radius);
+  padding: 16px;
+  box-shadow: var(--shadow);
+}
+.card h3 { margin: 0 0 12px }
+.metric { font-size: 40px; font-weight: 800; letter-spacing: .5px }
+.feed { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px }
+.feed li { color: var(--muted) }
+.toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; gap: 12px }
+.table { width: 100%; border-collapse: collapse }
+.table th, .table td { text-align: left; padding: 10px 8px; border-bottom: 1px solid rgba(255,255,255,.06) }
+.table tbody tr:hover { background: rgba(255,255,255,.03) }
+
+/* ---- Status badges ---- */
+.badge { display: inline-flex; align-items: center; gap: 6px; background: #0e1530; border: 1px solid rgba(255,255,255,.1); padding: 4px 8px; border-radius: 999px; font-size: 12px }
+.badge.ok { border-color: #14532d; color: #bbf7d0 }
+.badge.warn { border-color: #7c2d12; color: #fed7aa }
+.badge.danger { border-color: #7f1d1d; color: #fecaca }
+
+/* ---- Calendar ---- */
+.calendar-controls { display: flex; align-items: center; gap: 12px }
+.calendar-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 8px; margin-top: 12px }
+.calendar-day {
+  border: 1px solid rgba(240,240,240,0.06);
+  border-radius: 12px;
+  padding: 8px;
+  min-height: 88px;
+  background: #0f1634;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 6px;
+}
+.calendar-day .d { color: var(--muted); font-size: 12px }
+.calendar-event { background: #1f2a57; border: 1px solid rgba(255,255,255,.08); border-radius: 8px; padding: 4px 6px; font-size: 12px }
+.calendar-event.clickable { cursor: pointer }
+.calendar-event.clickable:hover { filter: brightness(1.1) }
+#calendarTitle { cursor: pointer }
+
+/* ---- Progress toggles ---- */
+.btn-group { display: flex; gap: 8px; flex-wrap: wrap }
+.btn.toggle { background: #ffb6ff; border-color: rgba(189, 44, 225, 0.522) }
+.btn.toggle.active { outline: 2px solid rgba(91,140,255,.6) }
+
+/* ---- Messages / Threads ---- */
+.threads {
+  list-style: none; padding: 0; margin: 0;
+  display: grid; gap: 8px;
+  max-height: 420px; overflow: auto;
+}
+.thread {
+  padding: 10px;
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 10px;
+  cursor: pointer;
+  background: #0f1634;
+  transition: .15s ease;
+}
+.thread:hover { transform: translateY(-1px); filter: brightness(1.05) }
+.thread.active { outline: 2px solid rgba(91,140,255,.6) }
+
+.message-head {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+}
+.message-head h3 { margin: 0; font-size: 16px }
+
+.messages {
+  min-height: 320px;
+  max-height: 520px;
+  overflow: auto;
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 12px;
+  padding: 12px;
+  background: #0d1430;
+}
+.msg { display: grid; gap: 4px; margin-bottom: 12px }
+.msg .meta { font-size: 12px; color: var(--muted) }
+.msg .bubble {
+  background: #10183a;
+  border: 1px solid rgba(255,255,255,.06);
+  padding: 10px 12px;
+  border-radius: 12px;
+  max-width: 72%;
+  line-height: 1.4;
+  position: relative;
+  box-shadow: 0 4px 12px rgba(0,0,0,.25);
+}
+.msg .bubble a { color: #9cc0ff; text-decoration: underline }
+.msg.me { justify-items: end }
+.msg.me .bubble { background: #17306a }
+
+.message-form {
+  display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-top: 10px
+}
+
+/* Attachment preview chips with close “×” */
+#attachPreview { margin-top: 6px; display: flex; gap: 6px; flex-wrap: wrap }
+#attachPreview .badge {
+  position: relative;
+  padding-right: 22px;
+  background: #112052;
+  border-color: rgba(255,255,255,.12);
+}
+#attachPreview .badge::after{
+  content:'×';
+  position:absolute; right:6px; top:0; bottom:0;
+  display:grid; place-items:center; width:14px;
+  opacity:.7; font-weight:700;
+}
+#attachPreview .badge:hover::after{ opacity:1 }
+
+/* ---- Dialogs ---- */
+.dialog { border: none; border-radius: 16px; padding: 0; background: transparent }
+.dialog::backdrop { background: rgba(3,6,18,.6) }
+.dialog .form {
+  background: var(--panel);
+  border: 1px solid rgba(255,255,255,.06);
+  padding: 16px;
+  border-radius: 16px;
+  min-width: min(640px,92vw);
+}
+.dialog .form h3,
+.dialog .form label { color: var(--text) }
+
+/* Force calendar/clock icons */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+  filter: brightness(0) invert(1);
+  opacity: 1;
+}
+input[type="date"],
+input[type="time"] {
+  color: var(--text);
+  color-scheme: dark;
+}
+
+.actions { display: flex; gap: 8px; justify-content: flex-end }
+.checkbox { display: flex; gap: 10px; align-items: center }
+
+/* ---- Info note ---- */
+.note {
+  background: #0e1530;
+  border: 1px dashed rgba(255,255,255,.18);
+  color: var(--muted);
+  padding: 10px 12px;
+  border-radius: 10px;
+}
+
+/* ---- Progress list/cards ---- */
+.progress-list { display: grid; gap: 12px }
+.progress { background: #0e1530; border: 1px solid rgba(255,255,255,.08); border-radius: 10px; padding: 10px }
+.progress .row { display: flex; justify-content: space-between; margin-bottom: 6px }
+.progress-bar { height: 10px; border-radius: 999px; background: #0c1430; overflow: hidden; border: 1px solid rgba(255,255,255,.08) }
+.progress-bar > span { display: block; height: 100%; background: linear-gradient(90deg, var(--brand), #8bb3ff) }
+
+/* ---- Visibility helpers ---- */
+.only-staff { display: none; }
+
+/* ---- HARD-HIDE Import/Export everywhere (as requested) ---- */
+#exportDataBtn,
+#importDataBtn,
+#importDataInput {
+  display: none !important;
+}
+
+/* ---- Nicer look for message header action buttons ---- */
+#leaveThreadBtn.btn.ghost { border-color: rgba(255,255,255,.14); }
+#deleteThreadBtn.btn.danger { background: linear-gradient(135deg, #7a1320, #3a0b12); }
+#deleteThreadBtn.btn.danger:hover { filter: brightness(1.08) }
+
+/* ==================== ADDITIONS FOR AVAILABILITY (appended) ==================== */
+
+/* Availability badges */
+.badge.avail { border-color: #14532d; color: #bbf7d0; }
+.badge.unavail { border-color: #7f1d1d; color: #fecaca; }
+
+/* Collapse admin-only column in availability table for non-admins (JS will toggle visibility for admins) */
+#route-availability .only-admin { display: none; }
+
+.badge.avail { border-color:#14532d; color:#bbf7d0; background:#0e1f14; }
+.badge.unavail { border-color:#7f1d1d; color:#fecaca; background:#2a0e12; }
+
+/* =========================================================
+   LIGHT THEME OVERRIDES — Cream White
+   Paste stayed here to override dark theme
+   ========================================================= */
+
+/* 1) Swap core tokens to light palette */
+:root {
+  /* backgrounds */
+  --bg: #fdf6e3;            /* page background (cream) */
+  --panel: #ffffff;         /* cards/panels = white */
+
+  /* text */
+  --text: #0f172a;          /* ink (near-black) */
+  --muted: #475569;         /* secondary text */
+
+  /* brand & accents (kept) */
+  --brand: #5b8cff;
+  --brand-2: #6ee7b7;
+  --danger: #ef4444;
+  --ok: #22c55e;
+  --warn: #f59e0b;
+
+  /* effects */
+  --ring: 0 0 0 3px rgba(91, 140, 255, .28);
+  --shadow: 0 10px 30px rgba(0, 0, 0, .08);
+}
+
+/* 2) Page background becomes cream (remove dark radial bursts) */
+body {
+  background:
+    linear-gradient(180deg, #fdf6e3, #f6efdd); /* soft cream gradient */
+  color: var(--text);
+}
+
+/* 3) Global containers (cards, panels, shells) go white with soft borders */
+.auth-card,
+.card,
+.messages,
+.thread,
+.calendar-day,
+.progress,
+.note,
+.dialog .form,
+.sidebar,
+.topbar {
+  background: var(--panel);
+  border: 1px solid rgba(15, 23, 42, .08); /* subtle ink border */
+  box-shadow: var(--shadow);
+  color: var(--text);
+}
+
+/* 4) App shell + chrome */
+.app-shell { background: transparent; }
+.sidebar {
+  background: #fff;                 /* solid white sidebar */
+  border-right: 1px solid rgba(15, 23, 42, .08);
+}
+.sidebar-footer { border-top: 1px solid rgba(15,23,42,.08); }
+.sidebar-header { border-bottom: 1px solid rgba(15,23,42,.08); }
+
+.topbar {
+  background: rgba(255,255,255,.85); /* translucent white topbar */
+  backdrop-filter: blur(6px);
+  border-bottom: 1px solid rgba(15,23,42,.08);
+}
+
+/* 5) Forms (inputs/selects/textarea) → light surfaces */
+.form input,
+.form select,
+.form textarea {
+  background: #ffffff;
+  border: 1px solid rgba(15,23,42,.12);
+  color: var(--text);
+}
+.form input:focus,
+.form select:focus,
+.form textarea:focus {
+  box-shadow: var(--ring);
+  border-color: rgba(91,140,255,.55);
+}
+
+/* Date/Time pickers (drop dark color-scheme) */
+input[type="date"],
+input[type="time"] {
+  color: var(--text);
+  color-scheme: light;
+}
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+  filter: none; opacity: .9;
+}
+
+/* 6) Buttons on light theme */
+.btn {
+  background: #ffffff;
+  color: var(--text);
+  border: 1px solid rgba(15,23,42,.12);
+}
+.btn:hover { filter: none; background: #fafafa; }
+.btn.primary {
+  background: linear-gradient(135deg, var(--brand), #8bb3ff);
+  color: #0b1020; /* readable over blue */
+  border: none;
+}
+.btn.ghost { background: transparent; border-color: rgba(15,23,42,.16); }
+.btn.danger { background: #fee2e2; border-color: #fecaca; color: #991b1b; }
+
+/* 7) Tables and feeds */
+.table th, .table td {
+  border-bottom: 1px solid rgba(15,23,42,.08);
+  color: var(--text);
+}
+.table tbody tr:hover { background: rgba(15,23,42,.04); }
+.feed li { color: var(--muted); }
+
+/* 8) Messages / Threads bubbles */
+.messages { background: #fff; }
+.msg .bubble {
+  background: #f8fafc; /* light slate-50 */
+  border: 1px solid rgba(15,23,42,.08);
+  color: var(--text);
+  box-shadow: 0 4px 12px rgba(0,0,0,.04);
+}
+.msg.me .bubble {
+  background: #eff6ff; /* light brand-tinted */
+  border-color: rgba(59,130,246,.25);
+}
+
+/* 9) Calendar */
+.calendar-day {
+  background: #ffffff;
+  border: 1px solid rgba(15,23,42,.08);
+}
+.calendar-event {
+  background: #f1f5f9; /* slate-100 */
+  border: 1px solid rgba(15,23,42,.08);
+  color: var(--text);
+}
+
+/* 10) Progress bars */
+.progress { background: #ffffff; }
+.progress-bar { background: #e5e7eb; border: 1px solid rgba(15,23,42,.08); }
+
+/* 11) Toast on light */
+.toast {
+  background: #ffffff;
+  color: var(--text);
+  border: 1px solid rgba(15,23,42,.12);
+  box-shadow: var(--shadow);
+}
+
+/* 12) Availability badges (stay readable on light) */
+.badge { background: #fff; border: 1px solid rgba(15,23,42,.12); color: var(--text); }
+.badge.ok { border-color: #86efac; color: #166534; background: #ecfdf5; }
+.badge.warn { border-color: #fed7aa; color: #7c2d12; background: #fff7ed; }
+.badge.danger { border-color: #fecaca; color: #7f1d1d; background: #fee2e2; }
+.badge.avail { border-color:#86efac; color:#166534; background:#ecfdf5; }
+.badge.unavail { border-color:#fecaca; color:#7f1d1d; background:#fee2e2; }
+
+/* 13) Links inside bubbles, tables, etc. */
+.msg .bubble a { color: #1d4ed8; } /* blue-700 */
+
+/* =========================================================
+   NAV + ACCOUNT VISIBILITY TWEAKS FOR CREAM THEME
+   (Place at the very end of styles.css)
+   ========================================================= */
+
+/* 1) Sidebar nav buttons: darker text, light hover, clear active */
+.nav-btn {
+  color: #0f172a;                     /* darker text for readability */
+  background: transparent;
+  border: 1px solid transparent;
+  font-weight: 600;
+}
+.nav-btn:hover {
+  background: #f3f4f6;                /* light gray hover (visible on cream) */
+  border-color: rgba(15,23,42,.10);
+  color: #0f172a;                     /* keep text dark on hover */
+}
+.nav-btn.active {
+  background: #eef2ff;                /* soft indigo background for active */
+  border-color: rgba(59,130,246,.35); /* subtle indigo border */
+  color: #1e3a8a;                     /* darker indigo text */
+}
+.nav-btn:focus-visible {
+  outline: 3px solid rgba(91,140,255,.35); /* clear focus ring for keyboard nav */
+  outline-offset: 2px;
+}
+
+/* 2) Sidebar header (firm + role) readability */
+.firm {
+  color: #0f172a;        /* darker firm name */
+  font-weight: 800;
+}
+.role-badge {
+  color: #1e3a8a;        /* darker label text */
+  background: #eef2ff;   /* soft indigo pill */
+  border: 1px solid rgba(59,130,246,.25);
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+/* 3) Account name in topbar: make it darker and bolder */
+.account { color: #0f172a; }          /* darker than muted */
+#currentUserName {
+  color: #0f172a;
+  font-weight: 700;
+}
+
+/* 4) Optional: lighten topbar search/button hover on cream */
+.topbar .btn:hover { background: #f3f4f6; }
+.search input {
+  background: #ffffff;
+  border: 1px solid rgba(15,23,42,.12);
+  color: #0f172a;
+}
+.search input::placeholder { color: #64748b; } /* slate-500 */
+
+/* neeeeeeeeeeeeeeeeeeew */
+
+/* ===== Back-to-landing button (top-left) ===== */
+.back-link{
+  position: fixed;
+  top: 18px;
+  left: 18px;
+  z-index: 1001;                     /* above cards/topbar */
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  text-decoration: none;
+  font-weight: 700;
+  background: #ffffff;               /* cream theme surface */
+  color: #0f172a;                    /* dark, readable text */
+  border: 1px solid rgba(15,23,42,.12);
+  box-shadow: 0 10px 30px rgba(0,0,0,.08);
+  transition: background .2s ease, transform .1s ease;
+}
+.back-link:hover{ background: #f3f4f6; }
+.back-link:active{ transform: translateY(1px); }
+.back-link svg{ display:block; }
+
+/* Compact on small screens (icon only) */
+@media (max-width: 560px){
+  .back-link{ padding: 8px; }
+  .back-link span{ display:none; }
+}
+
+/* ===== Dashboard list styling ===== */
+.list { 
+  list-style: none; margin: 0; padding: 0; display: grid; gap: 10px;
+}
+.list-item {
+  display: grid; gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid rgba(15,23,42,.10);
+  border-radius: 12px;
+  background: #ffffff;          /* coherent with your cream theme */
+}
+.list-item .row {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+}
+.list-item .title { font-weight: 700; }
+.list-item .meta  { color: var(--muted); font-size: 13px; }
+
+.badge.slim {
+  padding: 2px 8px; border-radius: 999px; font-size: 12px;
+  background: #eef2ff; border: 1px solid rgba(59,130,246,.25); color: #1e3a8a;
+}
+.empty-hint {
+  color: var(--muted); background: #fff; border: 1px dashed rgba(15,23,42,.18);
+  padding: 12px; border-radius: 12px;
+}
+
+/* dark theme fallback (if you switch back) */
+@media (prefers-color-scheme: dark) {
+  .list-item { background: #0f1634; border-color: rgba(255,255,255,.08); }
+  .empty-hint { background: #0e1530; border-color: rgba(255,255,255,.18); }
+}
+
+/* newwwww */
+/* ================== Case Progress (client dashboard) ================== */
+:root{
+  /* fallbacks if your theme vars exist */
+  --cp-brand: var(--primary, #1e3a8a);
+  --cp-muted: var(--muted, #6b7280);
+  --cp-cream-25: #FFFBF2;
+  --cp-cream-50: #FFF7E6;
+  --cp-cream-100:#FDF3E0;
+  --cp-cream-200:#FAEED1;
+  --cp-border: #e5e7eb;
+}
+
+.cp-card-head{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
+  margin-bottom:6px;
+}
+.cp-legend{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:10px 16px;font-size:12px;color:var(--cp-muted);}
+.cp-legend li{display:flex;align-items:center;gap:6px;white-space:nowrap}
+.cp-chip{padding:3px 8px;border-radius:999px;background:var(--cp-cream-200);color:var(--cp-brand);font-weight:600;line-height:1;}
+
+.cp-list{list-style:none;margin:0;padding:0;display:grid;gap:12px;}
+.cp-row{
+  background:var(--cp-cream-25);
+  border:1px solid var(--cp-cream-200);
+  border-radius:12px;
+  padding:12px 14px;
+  display:grid;gap:8px;
+}
+.cp-row-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.cp-row-title{font-weight:700}
+.cp-meta{display:flex;flex-wrap:wrap;gap:6px 10px;font-size:12px;color:var(--cp-muted)}
+.cp-meta span+span::before{content:"•";margin:0 6px;color:var(--cp-muted)}
+
+.cp-bar{position:relative;height:10px;border-radius:999px;background:var(--cp-cream-100);border:1px solid var(--cp-cream-200);overflow:hidden}
+.cp-bar>span{position:absolute;inset:0 auto 0 0;width:0%;background:var(--cp-brand);border-radius:999px;transition:width .35s ease}
+
+.cp-stage{font-size:12px;color:var(--cp-muted);font-weight:600}
+.cp-empty{text-align:center;color:var(--cp-muted);padding:8px 0}
+
+/* show the card only on active dashboard route (extra safety) */
+#clientProgressCardPro{display:none}
+#route-dashboard.active #clientProgressCardPro{display:block}
+
+/* Hide the progress card by default; show only on active Dashboard route */
+#clientProgressCardPro { display: none; }
+#route-dashboard.active #clientProgressCardPro { display: block; }
+
+/* para sa design ng dashboard pending etc */
+
+/* ======================= Event Details (polished modal) ======================= */
+/* Works with your existing cream theme tokens                                    */
+/* Paste at the very end of styles.css                                            */
+
+#eventDetailDialog::backdrop{
+  background: rgba(15,23,42,.45);   /* soft dim */
+  backdrop-filter: blur(3px);
+}
+
+/* Core sheet */
+#eventDetailDialog{
+  padding: 0;                       /* the .dialog class already removes borders */
+  border: none;
+}
+#eventDetailDialog > * {
+  /* If your JS wrapped the content in a DIV or FORM, this styles it */
+  display: block;
+  background: var(--panel);
+  color: var(--text);
+  min-width: min(720px, 94vw);
+  max-width: 94vw;
+  margin: 0;
+  padding: 22px 24px;
+  border: 1px solid rgba(15,23,42,.08);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+}
+
+/* Header */
+#eventDetailDialog h3,
+#eventDetailDialog .title {
+  margin: 0 0 14px;
+  font-size: 22px;
+  line-height: 1.25;
+  font-weight: 800;
+}
+
+/* Definition list layout (dt/dd) – robust even if your HTML only uses <p> */
+#eventDetailDialog dl{
+  margin: 0;
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  row-gap: 12px;
+  column-gap: 16px;
+}
+#eventDetailDialog dt{
+  margin: 0;
+  color: var(--muted);
+  font-weight: 700;
+}
+#eventDetailDialog dd{
+  margin: 0;
+  font-weight: 600;
+}
+
+/* Spacing if your JS used simple rows instead of <dl> */
+#eventDetailDialog .ed-row{
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  gap: 12px 16px;
+  align-items: baseline;
+  padding: 6px 0;
+}
+#eventDetailDialog .ed-label{ color: var(--muted); font-weight: 700; }
+#eventDetailDialog .ed-value{ font-weight: 600; }
+
+/* Dividers between sections (applies whether you used dl or .ed-row) */
+#eventDetailDialog dl > dt:first-child,
+#eventDetailDialog .ed-row:first-child{ border-top: none; }
+#eventDetailDialog dl > dt,
+#eventDetailDialog .ed-row{
+  border-top: 1px dashed rgba(15,23,42,.12);
+}
+#eventDetailDialog dl > dt:nth-of-type(1),
+#eventDetailDialog .ed-row:nth-of-type(1){
+  border-top: none;
+}
+
+/* Subtle metadata (e.g., Case ID inline chip) */
+#eventDetailDialog .chip{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #eef2ff;
+  border: 1px solid rgba(59,130,246,.25);
+  color: #1e3a8a;
+  font-weight: 700;
+  font-size: 12px;
+}
+
+/* Footer actions */
+#eventDetailDialog .actions{
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 18px;
+}
+#eventDetailDialog .btn{
+  background: #fff;
+  color: var(--text);
+  border: 1px solid rgba(15,23,42,.12);
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-weight: 700;
+}
+#eventDetailDialog .btn:hover{ background: #f3f4f6; }
+#eventDetailDialog .btn.primary{
+  background: linear-gradient(135deg, var(--brand), #8bb3ff);
+  color: #0b1020;
+  border: none;
+}
+
+/* Responsive: narrower label column on phones */
+@media (max-width: 560px){
+  #eventDetailDialog dl,
+  #eventDetailDialog .ed-row{
+    grid-template-columns: 1fr;  /* stack label/value */
+  }
+}
