@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en" data-role="paralegal">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Cases — Paralegal</title>
+  <link rel="stylesheet" href="cases.css?v=3">
+</head>
+<body>
+  <div class="wrap">
+    <div class="header">
+      <div>
+        <div class="h-title">Cases — Paralegal</div>
+        <div class="note">Your assigned matters. View details, attach documents, update status.</div>
+      </div>
+      <div class="h-actions">
+        <span class="note">LIGHT</span><div class="switch" id="theme"><i></i></div><span class="note">DARK</span>
+      </div>
+    </div>
+
+    <div class="grid kpi">
+      <div class="card pad"><div class="l">Assigned to You</div><div class="n" id="kpiActive">0</div></div>
+      <div class="card pad"><div class="l">Hearings (Next 30d)</div><div class="n" id="kpiHearing">0</div></div>
+      <div class="card pad"><div class="l">Docs Uploaded (YTD)</div><div class="n" id="kpiNew">0</div></div>
+      <div class="card pad"><div class="l">Closed (YTD)</div><div class="n" id="kpiClosed">0</div></div>
+    </div>
+
+    <div class="card pad">
+      <div class="toolbar">
+        <input class="input grow" id="q" placeholder="Search your cases…">
+        <select id="fStage">
+          <option value="">Stage: All</option><option value="-1">Not Set</option>
+          <option value="0">First Level Courts</option><option value="1">Regional Trial Courts</option>
+          <option value="2">Specialized Higher Courts</option><option value="3">Supreme Court</option>
+        </select>
+        <select id="fType"></select>
+        <select id="fSort">
+          <option value="updated_desc">Updated ↓</option>
+          <option value="updated_asc">Updated ↑</option>
+          <option value="opened_desc">Opened ↓</option>
+          <option value="opened_asc">Opened ↑</option>
+        </select>
+        <button class="btn secondary" id="reset">Reset</button>
+      </div>
+
+      <table class="table" id="tbl">
+        <thead>
+          <tr>
+            <th class="col-ref">Reference</th>
+            <th class="col-title">Title</th>
+            <th class="col-client">Client</th>
+            <th class="col-lawyer">Lead Counsel</th>
+            <th class="col-type">Case Type</th>
+            <th class="col-stage">Stage</th>
+            <th class="col-hearing">Next Hearing</th>
+            <th class="col-opened">Opened</th>
+            <th class="col-updated">Updated</th>
+            <th class="col-actions">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- View drawer (paralegal) -->
+  <aside class="drawer" id="drawer">
+    <div class="hd">
+      <strong id="vwTitle">—</strong>
+      <span class="chip gray" id="vwRef">—</span>
+      <button class="ib" id="vwClose" title="Close">✕</button>
+    </div>
+    <div class="bd">
+      <div class="kv"><div>Client</div><div id="vwClient">—</div></div>
+      <div class="kv"><div>Lead Counsel</div><div id="vwLawyer">—</div></div>
+      <div class="kv"><div>Case Type</div><div id="vwType">—</div></div>
+      <div class="kv"><div>Court Stage</div>
+        <div>
+          <div class="stage" id="vwStage" data-level="-1">
+            <div class="s"><i></i></div><div class="s"><i></i></div><div class="s"><i></i></div><div class="s"><i></i></div>
+          </div>
+          <div class="stage-labels"><div>First Level Courts</div><div>Regional Trial Courts</div><div>Specialized Higher Courts</div><div>Supreme Court</div></div>
+        </div>
+      </div>
+      <div class="kv"><div>Opened</div><div id="vwOpened">—</div></div>
+      <div class="kv"><div>Next Hearing</div><div id="vwHearing">—</div></div>
+      <div class="kv"><div>Status</div>
+        <div>
+          <select class="input small" id="vwStatus"><option>Active</option><option>Closed</option></select>
+          <span class="note">Paralegal can update status.</span>
+        </div>
+      </div>
+      <div><div class="label">Summary</div><div id="vwDesc" style="white-space:pre-wrap"></div></div>
+      <hr class="hr">
+      <div class="kv"><div>Attachments</div>
+        <div>
+          <div class="attach">
+            <input type="file" id="attachInput">
+            <button class="btn" id="attachBtn">Attach File</button>
+          </div>
+          <div id="docList" class="doc-list"></div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <div class="toast" id="toast">Saved.</div>
+  <script src="cases.js?v=3"></script>
+</body>
+</html>

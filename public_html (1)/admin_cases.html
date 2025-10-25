@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en" data-role="admin">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cases — Admin Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="cases.css?v=3">
+</head>
+<body>
+  <div class="wrap">
+    <div class="header">
+      <div>
+        <div class="h-title">Cases — Admin Dashboard</div>
+        <div class="note">Manage matters, schedules, documents, and court stage.</div>
+      </div>
+      <div class="h-actions">
+        <span class="note">LIGHT</span>
+        <div class="switch" id="theme"><i></i></div>
+        <span class="note">DARK</span>
+        <button class="btn" id="addBtn">+ New Case</button>
+      </div>
+    </div>
+
+    <div class="grid kpi">
+      <div class="card pad"><div class="l">Active Cases</div><div class="n" id="kpiActive">0</div></div>
+      <div class="card pad"><div class="l">New This Month</div><div class="n" id="kpiNew">0</div></div>
+      <div class="card pad"><div class="l">Awaiting Hearing</div><div class="n" id="kpiHearing">0</div></div>
+      <div class="card pad"><div class="l">Closed (YTD)</div><div class="n" id="kpiClosed">0</div></div>
+    </div>
+
+    <div class="card pad">
+      <div class="toolbar">
+        <input class="input grow" id="q" placeholder="Search by title, client, lawyer, or reference…">
+        <select id="fStage">
+          <option value="">Stage: All</option>
+          <option value="-1">Not Set</option>
+          <option value="0">First Level Courts</option>
+          <option value="1">Regional Trial Courts</option>
+          <option value="2">Specialized Higher Courts</option>
+          <option value="3">Supreme Court</option>
+        </select>
+
+        <!-- Searchable case type + manage button (admin only) -->
+        <div class="combo">
+          <input class="input" id="fTypeInput" list="typeOptions" placeholder="Case Type: All (type to search)">
+          <datalist id="typeOptions"></datalist>
+          <button class="btn secondary mini" id="manageTypesBtn" title="Manage case types">Manage</button>
+        </div>
+
+        <select id="fSort">
+          <option value="updated_desc">Updated ↓</option>
+          <option value="updated_asc">Updated ↑</option>
+          <option value="opened_desc">Opened ↓</option>
+          <option value="opened_asc">Opened ↑</option>
+        </select>
+        <button class="btn secondary" id="reset">Reset</button>
+      </div>
+
+      <table class="table" id="tbl">
+        <thead>
+          <tr>
+            <th class="col-ref">Reference</th>
+            <th class="col-title">Title</th>
+            <th class="col-client">Client</th>
+            <th class="col-lawyer">Lead Counsel</th>
+            <th class="col-type">Case Type</th>
+            <th class="col-stage">Stage</th>
+            <th class="col-hearing">Next Hearing</th>
+            <th class="col-opened">Opened</th>
+            <th class="col-updated">Updated</th>
+            <th class="col-actions">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- View drawer (read-only except Status + Attach) -->
+  <aside class="drawer" id="drawer">
+    <div class="hd">
+      <strong id="vwTitle">—</strong>
+      <span class="chip gray" id="vwRef">—</span>
+      <button class="ib" id="vwClose" title="Close">✕</button>
+    </div>
+    <div class="bd">
+      <div class="kv"><div>Client</div><div id="vwClient">—</div></div>
+      <div class="kv"><div>Lead Counsel</div><div id="vwLawyer">—</div></div>
+      <div class="kv"><div>Case Type</div><div id="vwType">—</div></div>
+      <div class="kv"><div>Court Stage</div>
+        <div>
+          <div class="stage" id="vwStage" data-level="-1">
+            <div class="s"><i></i></div><div class="s"><i></i></div><div class="s"><i></i></div><div class="s"><i></i></div>
+          </div>
+          <div class="stage-labels"><div>First Level Courts</div><div>Regional Trial Courts</div><div>Specialized Higher Courts</div><div>Supreme Court</div></div>
+          <div class="note">Read-only here. Update stage via “Edit”.</div>
+        </div>
+      </div>
+      <div class="kv"><div>Opened</div><div id="vwOpened">—</div></div>
+      <div class="kv"><div>Next Hearing</div><div id="vwHearing">—</div></div>
+      <div class="kv"><div>Status</div>
+        <div>
+          <select class="input small" id="vwStatus"><option>Active</option><option>Closed</option></select>
+          <span class="note">Only status is editable in View.</span>
+        </div>
+      </div>
+      <div><div class="label">Summary</div><div id="vwDesc" style="white-space:pre-wrap"></div></div>
+      <hr class="hr">
+      <div class="kv"><div>Attachments</div>
+        <div>
+          <div class="attach">
+            <input type="file" id="attachInput">
+            <button class="btn" id="attachBtn">Attach File</button>
+          </div>
+          <div id="docList" class="doc-list"></div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Add/Edit -->
+  <div class="backdrop" id="dlgBack">
+    <div class="dialog">
+      <div class="hd">
+        <strong id="dlgTitle">New Case</strong>
+        <button class="ib" id="dlgClose">✕</button>
+      </div>
+      <form class="bd" id="form">
+        <div class="grid-2">
+          <div class="field"><label class="label">Case Title</label><input class="input" name="title" required></div>
+          <div class="field"><label class="label">Reference</label><input class="input" name="ref" placeholder="AUTO if left blank"></div>
+          <div class="field"><label class="label">Client</label><input class="input" name="client" required></div>
+          <div class="field"><label class="label">Lead Counsel</label><input class="input" name="lawyer" required></div>
+          <div class="field">
+            <label class="label">Case Type</label>
+            <select class="input" name="type" id="typeSelect"></select>
+            <div class="tags" id="typeTags"><input id="typeInput" class="tags-input" placeholder="Type name and press Enter"></div>
+          </div>
+          <div class="field">
+            <label class="label">Court Stage</label>
+            <select class="input" name="stage" required>
+              <option value="-1">Not Set (0 progress)</option>
+              <option value="0">First Level Courts</option>
+              <option value="1">Regional Trial Courts</option>
+              <option value="2">Specialized Higher Courts</option>
+              <option value="3">Supreme Court</option>
+            </select>
+          </div>
+          <div class="field"><label class="label">Opened On</label><input class="input" type="date" name="opened"></div>
+          <div class="field"><label class="label">Next Hearing (no past date)</label><input class="input" type="date" name="hearing" id="hearingDate"></div>
+          <div class="field" style="grid-column:1/-1"><label class="label">Summary</label><textarea class="input" name="desc" rows="3" placeholder="Brief case summary (optional)"></textarea></div>
+        </div>
+      </form>
+      <div class="ft">
+        <button class="btn secondary" id="dlgCancel" type="button">Cancel</button>
+        <button class="btn" id="dlgSave" type="button">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Manage Types modal -->
+  <div class="backdrop" id="typesBack">
+    <div class="dialog narrow">
+      <div class="hd">
+        <strong>Manage Case Types</strong>
+        <button class="ib" id="typesClose">✕</button>
+      </div>
+      <div class="bd">
+        <div class="toolbar">
+          <input class="input grow" id="typeSearch" placeholder="Search types…">
+          <input class="input" id="typeNew" placeholder="New type name">
+          <button class="btn" id="typeAdd">Add</button>
+        </div>
+        <div id="typesList"></div>
+      </div>
+      <div class="ft">
+        <button class="btn secondary" id="typesDone">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirm Modal (shared) -->
+<div class="backdrop" id="confirmBack" style="display:none">
+  <div class="dialog confirm">
+    <div class="hd">
+      <strong id="cfTitle">Confirm</strong>
+      <button class="ib" id="cfClose">✕</button>
+    </div>
+    <div class="bd">
+      <p id="cfMsg" style="margin:0"></p>
+    </div>
+    <div class="ft">
+      <button class="btn secondary" id="cfCancel" type="button">Cancel</button>
+      <button class="btn danger" id="cfOk" type="button">Remove</button>
+    </div>
+  </div>
+</div>
+
+  <div class="toast" id="toast">Saved.</div>
+  <script src="cases.js?v=3"></script>
+</body>
+</html>

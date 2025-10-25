@@ -1,0 +1,318 @@
+/* =============================
+   Talampas Login — Clean Theme
+   (scoped to #loginView only)
+   ============================= */
+#loginView {
+  /* Theme tokens */
+  --bg-cream:       #f6f2ec;
+  --bg-cream-2:     #f2ece5;
+  --card:           #ffffff;
+  --ink:            #3f2f29;
+  --sub:            #8a7f79;
+  --field-bg:       #fbf9f7;
+  --field-bd:       #ece7e2;
+  --field-bd-focus: #e0b28f;
+  --field-bd-error: #e26a45;
+  --btn:            #d6b08f;
+  --btn-hover:      #cba685;
+  --ring:           0 0 0 3px rgba(224,178,143,.28);
+
+  /* Layout + background */
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 6vh 20px;
+  background:
+    radial-gradient(1200px 600px at 15% 20%, var(--bg-cream-2), transparent 60%),
+    radial-gradient(900px 500px at 85% 60%, var(--bg-cream-2), transparent 55%),
+    var(--bg-cream);
+  color: var(--ink);
+
+  /* Smoother text rendering */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Card (small window) */
+#loginView .auth-card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--card);
+  border: 1px solid rgba(17,24,39,.06);
+  border-radius: 22px;
+  box-shadow: 0 24px 60px rgba(0,0,0,.08), 0 2px 10px rgba(0,0,0,.04);
+  padding: 26px 24px 22px;
+  animation: loginFade .45s ease-out both;
+  transition: box-shadow .25s ease, transform .25s ease;
+}
+#loginView .auth-card:hover { transform: translateY(-1px); }
+
+/* Brand + coin logo */
+#loginView .brand {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  margin: 6px 0 10px;
+}
+#loginView .brand .logo {
+  width: 64px; height: 64px;
+  border-radius: 999px;
+  background: radial-gradient(circle at 30% 30%, #e9c6a7, #d5ae8c);
+  box-shadow:
+    0 8px 18px rgba(0,0,0,.12),
+    inset 0 2px 2px rgba(255,255,255,.55),
+    inset 0 -2px 3px rgba(0,0,0,.06);
+  display: grid; place-items: center;
+  overflow: hidden; object-fit: contain; padding: 8px;
+  animation: coinFloat 3.6s ease-in-out infinite;
+}
+
+/* Title + subtitle */
+#loginView #loginTitle {
+  margin: 2px 0 0;
+  text-align: center;
+  font-family: "Merriweather", ui-serif, Georgia, "Times New Roman", serif;
+  font-weight: 900;
+  letter-spacing: .2px;
+  line-height: 1.25;
+  color: var(--ink);
+}
+#loginView .subtitle {
+  margin: 2px 0 6px;
+  text-align: center;
+  font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-weight: 500;
+  letter-spacing: .1px;
+  color: var(--sub);
+  font-size: 13px;
+}
+
+/* Form + labels */
+#loginView .form { display: grid; gap: 14px; }
+#loginView .form label {
+  display: grid; gap: 6px;
+  font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-weight: 600; color: #4b3f38;
+}
+
+/* Inputs */
+#loginView .form input {
+  height: 46px; border-radius: 10px;
+  background: var(--field-bg);
+  border: 1px solid var(--field-bd);
+  color: #2b211d; padding: 0 14px; outline: none;
+  transition: border-color .15s ease, box-shadow .15s ease, background-color .2s ease;
+}
+#loginView .form input::placeholder { color: #9d948e; }
+#loginView .form input:hover { background: #fdfbfa; }
+#loginView .form input:focus {
+  border-color: var(--field-bd-focus);
+  box-shadow: var(--ring);
+}
+#loginView .form .is-invalid {
+  border-color: var(--field-bd-error) !important;
+  box-shadow: 0 0 0 3px rgba(226,106,69,.16) !important;
+}
+
+/* Helper line under email */
+#loginView .help { margin-top: -6px; font-size: 12px; color: var(--sub); }
+
+/* Remember / Forgot row */
+#loginView .row {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; margin-top: -2px; color: var(--sub); font-size: 13px;
+}
+#loginView .row a { color: var(--sub); text-decoration: none; }
+#loginView .row a:hover { text-decoration: underline; }
+
+/* Primary button */
+#loginView .btn.primary {
+  height: 46px; border-radius: 12px;
+  background: linear-gradient(180deg, #d9b592, #cda782);
+  color: #2b211d; border: none; font-weight: 700; letter-spacing: .2px;
+  transition: transform .08s ease, filter .2s ease, box-shadow .2s ease;
+  box-shadow: 0 2px 0 rgba(0,0,0,.05), 0 8px 18px rgba(205,167,130,.22);
+}
+#loginView .btn.primary:hover {
+  filter: brightness(1.04);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 0 rgba(0,0,0,.05), 0 12px 24px rgba(205,167,130,.26);
+}
+#loginView .btn.primary:active { transform: translateY(0); filter: brightness(0.98); }
+
+/* Centered forgot link (if you use .hint) */
+#loginView .hint { margin-top: 6px !important; text-align: center; }
+#loginView .hint .linklike {
+  font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, sans-serif;
+  color: #6b7280; text-decoration: none; font-weight: 600; font-size: 13px;
+  transition: color .15s ease;
+}
+#loginView .hint .linklike:hover { color: #2b211d; text-decoration: underline; }
+
+/* Divider + socials */
+#loginView .divider {
+  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px;
+  color: var(--sub); font-size: 12px; margin: 6px 0;
+}
+#loginView .divider::before,
+#loginView .divider::after { content: ""; height: 1px; background: #eee; }
+#loginView .social {
+  display: flex; gap: 10px; justify-content: center; margin-top: 2px;
+}
+#loginView .social .btn-ghost {
+  height: 40px; padding: 0 14px; border-radius: 12px;
+  background: #fff; border: 1px solid #eee; color: #374151; font-weight: 600;
+  display: flex; align-items: center; gap: 8px;
+}
+#loginView .social .btn-ghost:hover { filter: brightness(1.02); }
+
+/* Footer text */
+#loginView .mini-foot { margin-top: 8px; text-align: center; font-size: 12px; color: var(--sub); }
+#loginView .mini-foot a { color: #7c6a60; text-decoration: none; font-weight: 600; }
+#loginView .mini-foot a:hover { text-decoration: underline; }
+
+/* Dialog (forgot password) */
+#loginView .dialog {
+  background: var(--card); color: var(--ink);
+  border: 1px solid rgba(17,24,39,.08); border-radius: 16px;
+  font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, sans-serif;
+  box-shadow: 0 24px 60px rgba(0,0,0,.14);
+}
+#loginView .dialog input:focus {
+  border-color: var(--field-bd-focus);
+  box-shadow: var(--ring);
+}
+
+/* Animations */
+@keyframes loginFade { from {opacity:0; transform: translateY(8px);} to {opacity:1; transform: translateY(0);} }
+@keyframes coinFloat { 0%,100% {transform: translateY(0);} 50% {transform: translateY(-3px);} }
+
+/* Mobile */
+@media (max-width: 420px) {
+  #loginView .auth-card { padding: 22px 18px 18px; }
+}
+
+/* === Forgot Password link (modern clean style) === */
+#loginView .hint {
+  text-align: right;
+  margin-top: 8px;
+}
+
+#loginView .hint .linklike {
+  background: none;
+  border: none;
+  color: #4f46e5;             /* Indigo-600 (soft blue-purple like screenshot) */
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.2s ease, transform 0.15s ease;
+}
+
+#loginView .hint .linklike:hover {
+  color: #4338ca;             /* darker blue-purple on hover */
+  text-decoration: underline;
+  transform: translateY(-1px);
+}
+
+/* === Modern Reset Password Dialog === */
+#loginView .dialog {
+  background: #fff;
+  color: #3f2f29;
+  border: 1px solid rgba(17, 24, 39, 0.06);
+  border-radius: 18px;
+  padding: 26px 24px;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 380px;
+  animation: fadeIn .3s ease-out both;
+}
+
+#loginView .dialog h3 {
+  font-family: "Merriweather", serif;
+  font-size: 20px;
+  font-weight: 800;
+  margin-bottom: 6px;
+  color: #3f2f29;
+}
+
+#loginView .dialog p {
+  font-family: "Inter", sans-serif;
+  font-size: 14px;
+  color: #8a7f79;
+  margin-bottom: 18px;
+}
+
+/* Inputs */
+#loginView .dialog input {
+  width: 100%;
+  height: 44px;
+  border-radius: 10px;
+  border: 1px solid #ece7e2;
+  background: #fbf9f7;
+  padding: 0 12px;
+  color: #2b211d;
+  font-family: "Inter", sans-serif;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+#loginView .dialog input:focus {
+  border-color: #e0b28f;
+  box-shadow: 0 0 0 3px rgba(224, 178, 143, 0.25);
+  outline: none;
+}
+
+#loginView .dialog label span {
+  font-weight: 600;
+  font-size: 14px;
+  color: #4b3f38;
+}
+
+/* Buttons */
+#loginView .dialog .actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+#loginView .dialog .btn.ghost {
+  background: #fff;
+  border: 1px solid #d1d5db;
+  color: #374151;
+  border-radius: 10px;
+  padding: 8px 16px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+#loginView .dialog .btn.ghost:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+#loginView .dialog .btn.primary {
+  background: linear-gradient(180deg, #d9b592, #cda782);
+  color: #2b211d;
+  border: none;
+  border-radius: 10px;
+  padding: 8px 18px;
+  font-weight: 700;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.05),
+              0 8px 18px rgba(205, 167, 130, 0.22);
+  transition: all 0.2s ease;
+}
+
+#loginView .dialog .btn.primary:hover {
+  filter: brightness(1.04);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.05),
+              0 12px 24px rgba(205, 167, 130, 0.26);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}

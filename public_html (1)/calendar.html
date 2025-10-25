@@ -1,0 +1,151 @@
+<!--NEED PALITAN YUNG SA UPCOMING EVENTS HINDE MAAYOS YUNG PWESTO
+    TAPOS YUNG NAV BAR NG CALENDAR LUMALAKI PAG NAG A-ADD ISA PANG CASE OR EVENT, 
+    -->
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Law Firm — Calendar</title>
+
+  <!-- Fonts & Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+  <!-- FullCalendar (global bundle includes dayGrid/timeGrid/interaction) -->
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="calendar.css" />
+</head>
+<body>
+  <div class="app">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-title">Law Firm</div>
+        <div class="brand-sub">Calendar</div>
+      </div>
+
+      <div class="mini-panel">
+        <div class="mini-panel-title">Upcoming</div>
+        <ul id="upcomingList" class="upcoming-list"></ul>
+        <button id="viewAllBtn" class="view-all">View All</button>
+      </div>
+
+      <div class="create-area">
+        <button id="createLeft" class="btn-primary block">Create</button>
+      </div>
+
+      <div class="cal-lists">
+        <div class="list-title">My calendars</div>
+        <label class="cal-item"><input type="checkbox" class="cal-toggle" data-cal="appointments" checked><span class="color-dot" style="background:#1a73e8"></span>Appointments</label>
+        <label class="cal-item"><input type="checkbox" class="cal-toggle" data-cal="court" checked><span class="color-dot" style="background:#ea4335"></span>Court Hearings</label>
+        <label class="cal-item"><input type="checkbox" class="cal-toggle" data-cal="meetings" checked><span class="color-dot" style="background:#34a853"></span>Meetings</label>
+
+        <div class="list-title">Team calendars</div>
+        <label class="cal-item"><input type="checkbox" class="cal-toggle" data-cal="paralegal" checked><span class="color-dot" style="background:#f6c34a"></span>Paralegal</label>
+        <label class="cal-item"><input type="checkbox" class="cal-toggle" data-cal="attorney" checked><span class="color-dot" style="background:#8e24aa"></span>Attorney</label>
+
+        <div class="list-title">Client Bookings</div>
+        <label class="cal-item"><input type="checkbox" class="cal-toggle" data-cal="confirmed" checked><span class="color-dot" style="background:#1a73e8"></span>Confirmed</label>
+        <label class="cal-item"><input type="checkbox" class="cal-toggle" data-cal="pending" checked><span class="color-dot" style="background:#f6c34a"></span>Pending</label>
+        <label class="cal-item"><input type="checkbox" class="cal-toggle" data-cal="cancelled" checked><span class="color-dot" style="background:#9e9e9e"></span>Cancelled</label>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="main">
+      <header class="topbar">
+        <div class="left-controls">
+          <button id="todayBtn" class="btn-ghost">Today</button>
+          <button id="prevBtn" class="icon-btn"><span class="material-icons">chevron_left</span></button>
+          <button id="nextBtn" class="icon-btn"><span class="material-icons">chevron_right</span></button>
+          <div id="currentTitle" class="current-title" aria-live="polite"></div>
+        </div>
+
+        <div class="center-controls">
+          <div class="search-wrap">
+            <input id="searchInput" class="search" placeholder="Search events (title)..." />
+            <button id="searchBtn" class="icon-search"><span class="material-icons">search</span></button>
+          </div>
+        </div>
+
+        <div class="right-controls">
+          <div class="view-buttons" role="tablist">
+            <button id="monthView" class="view-btn active">Month</button>
+            <button id="weekView" class="view-btn">Week</button>
+            <button id="dayView" class="view-btn">Day</button>
+          </div>
+          <div class="profile">LF</div>
+        </div>
+      </header>
+
+      <div id="calendar" class="calendar-container"></div>
+    </main>
+
+    <!-- Floating Create -->
+    <button id="fab" class="fab" title="Create"><span class="material-icons">add</span></button>
+  </div>
+
+  <!-- Event Modal (Add/Edit) -->
+  <div id="modal" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3 id="modalTitle">Add event</h3>
+        <button id="modalClose" class="icon-btn"><span class="material-icons">close</span></button>
+      </div>
+      <form id="eventForm" class="modal-body">
+        <label class="field"><div class="label">Event title</div><input id="title" type="text" required></label>
+
+        <div class="field-row">
+          <label class="field half"><div class="label">Start</div><input id="start" type="datetime-local" required></label>
+          <label class="field half"><div class="label">End</div><input id="end" type="datetime-local" required></label>
+        </div>
+
+        <label class="field">
+          <div class="label">Category / Color</div>
+          <select id="category" required>
+            <option value="appointments">Appointments (Blue)</option>
+            <option value="court">Court Hearings (Red)</option>
+            <option value="meetings">Meetings (Green)</option>
+            <option value="paralegal">Paralegal (Yellow)</option>
+            <option value="attorney">Attorney (Purple)</option>
+            <option value="confirmed">Client - Confirmed (Blue)</option>
+            <option value="pending">Client - Pending (Yellow)</option>
+            <option value="cancelled">Client - Cancelled (Gray)</option>
+          </select>
+        </label>
+
+        <div class="modal-actions">
+          <div class="left">
+            <button type="button" id="deleteBtn" class="btn-delete hidden">Delete</button>
+          </div>
+          <div class="right">
+            <button type="button" id="cancelBtn" class="btn-ghost">Cancel</button>
+            <button type="submit" id="saveBtn" class="btn-primary">Save</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Day / All events modal (opened by 'more' link or "View All") -->
+  <div id="allModal" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3 id="allModalTitle">Events</h3>
+        <button id="allClose" class="icon-btn"><span class="material-icons">close</span></button>
+      </div>
+      <div class="modal-body" id="allEventsList" style="max-height:420px;overflow:auto"></div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="calendar.js"></script>
+</body>
+</html>

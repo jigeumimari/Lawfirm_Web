@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>The Law Firm of Talampas &amp; Associates — Law Firm</title>
+
+  <!-- Inter font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Landing styles -->
+  <link rel="stylesheet" href="/landing.css?v=3">
+</head>
+<body>
+  <!-- Header / Nav -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="#home">
+        <img class="brand-logo" src="/image/logotp.jpg" alt="Talampas &amp; Associates"/>
+        <span class="brand-name">The Law Firm of Talampas &amp; Associates</span>
+      </a>
+
+      <nav class="nav">
+        <a href="#home" class="active">Home</a>
+        <a href="#services">Services</a>
+        <a href="#attorneys">Attorneys</a>
+        <a href="#testimonials">Testimonials</a>
+        <a href="#contact">Contact</a>
+        <a class="btn-login" href="auth/login.html">Log In</a>
+      </nav>
+
+      <button class="nav-toggle" aria-label="Toggle navigation">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <section id="home" class="hero section">
+    <div class="slide" style="--bg:url('image/lady.jpg')">
+      <div class="overlay"></div>
+      <div class="container hero-content">
+        <h1>Your legal partner. clear, responsive, and dependable.</h1>
+        <p>From consultations to case management, we guide you at every step with clarity and care.</p>
+        <div style="display:flex; gap:12px; flex-wrap:wrap;">
+          <a class="btn btn-primary" href="auth/login.html">Book a Consultation</a>
+          <a class="btn btn-ghost" href="#services">Our Services</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Services -->
+  <section id="services" class="section">
+    <div class="container">
+      <div class="section-head">
+        <div>
+          <h2 class="section-title">Practice Areas</h2>
+          <p class="lead">Focused expertise across everyday and complex legal matters.</p>
+        </div>
+      </div>
+
+      <div class="carousel-block">
+        <button class="cbtn prev" aria-label="Previous">‹</button>
+        <div class="track-wrap">
+          <div class="track">
+            <article class="p-card">
+              <div class="p-media" style="--img:url('image/familylw.jpg')"></div>
+              <div class="p-body">
+                <h3>Family Law</h3>
+                <p>Annulment, custody, and support with discretion and care.</p>
+              </div>
+            </article>
+            <article class="p-card">
+              <div class="p-media" style="--img:url('image/crimlw.jpg')"></div>
+              <div class="p-body">
+                <h3>Criminal Case</h3>
+                <p>Defense strategy tailored to your rights and goals.</p>
+              </div>
+            </article>
+            <article class="p-card">
+              <div class="p-media" style="--img:url('image/immiglw.jpg')"></div>
+              <div class="p-body">
+                <h3>Immigration</h3>
+                <p>Visas, waivers, and residency—with practical timelines.</p>
+              </div>
+            </article>
+            <article class="p-card">
+              <div class="p-media" style="--img:url('image/laborlw.jpg')"></div>
+              <div class="p-body">
+                <h3>Labor &amp; Employment</h3>
+                <p>Employer/employee disputes, policy, and compliance.</p>
+              </div>
+            </article>
+            <article class="p-card">
+              <div class="p-media" style="--img:url('image/insurankw.jpg')"></div>
+              <div class="p-body">
+                <h3>Insurance Law</h3>
+                <p>Claims handling, denials, and settlement advisory.</p>
+              </div>
+            </article>
+          </div>
+        </div>
+        <button class="cbtn next" aria-label="Next">›</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Attorneys -->
+  <section id="attorneys" class="section section-cream">
+    <div class="container">
+      <div class="section-head">
+        <div>
+          <h2 class="section-title">Meet the Attorneys</h2>
+          <p class="lead">Seasoned, client-first advocates.</p>
+        </div>
+      </div>
+
+      <div class="carousel-block">
+        <button class="cbtn prev" aria-label="Previous">‹</button>
+        <div class="track-wrap">
+          <div class="track">
+            <article class="person img-card">
+            <img class="reveal-img" src="image/rubentp.jpg" alt="Attorney Ruben Talampas">
+            <div class="overlay">Head Attorney</div>
+            <div class="person-info">
+            <h3>Atty. Ruben Talampas Jr.</h3>
+            <p>Corporate &amp; Litigation</p>
+            </div>
+            </article>
+            <article class="person img-card">
+              <img class="reveal-img" src="image/attaldr.png" alt="Attorney 1">
+              <div class="overlay">Civil • Appellate</div>
+              <div class="person-info">
+                <h3>Atty. Jan Aldrin E. Afos</h3>
+                <p>Civil Law</p>
+              </div>
+            </article>
+            <article class="person img-card">
+              <img class="reveal-img" src="image/sample.png" alt="Attorney 2">
+              <div class="overlay">Civil • Labor</div>
+              <div class="person-info">
+                <h3>Atty. Edz Enriquez</h3>
+                <p>Labor Law</p>
+              </div>
+            </article>
+            <article class="person img-card">
+              <img class="reveal-img" src="image/atty1.jpg" alt="Attorney 3">
+              <div class="overlay">Litigation • 12+ yrs</div>
+              <div class="person-info">
+                <h3>Atty. Jane Talampas</h3>
+                <p>Civil &amp; Family Law Specialist</p>
+              </div>
+            </article>
+            <article class="person img-card">
+              <img class="reveal-img" src="image/atty2.jpg" alt="Attorney 4">
+              <div class="overlay">Labor • Corporate</div>
+              <div class="person-info">
+                <h3>Atty. Miguel Reyes</h3>
+                <p>Labor &amp; employment</p>
+              </div>
+            </article>
+            <article class="person img-card">
+              <img class="reveal-img" src="image/atty3.jpg" alt="Attorney 5">
+              <div class="overlay">Criminal • Appellate</div>
+              <div class="person-info">
+                <h3>Atty. Sofia Cruz</h3>
+                <p>Criminal Defense</p>
+              </div>
+            </article>
+          </div>
+        </div>
+        <button class="cbtn next" aria-label="Next">›</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Testimonials -->
+  <section id="testimonials" class="section">
+    <div class="container">
+      <div class="section-head">
+        <div>
+          <h2 class="section-title">Client Stories</h2>
+          <p class="lead">Results and relationships that last.</p>
+        </div>
+      </div>
+
+      <div class="carousel soft">
+        <div class="track">
+          <div class="tcard">“They explained options clearly and kept me updated.”<cite>— R. Santos</cite></div>
+          <div class="tcard">“Professional, strategic, and kind throughout.”<cite>— M. Dizon</cite></div>
+          <div class="tcard">“Won my case; I felt supported the whole time.”<cite>— L. Navarro</cite></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Contact -->
+  <section id="contact" class="section section-cream">
+    <div class="container grid two">
+      <div>
+        <h2 class="section-title">Visit or call us</h2>
+        <p class="lead">We respond within one business day.</p>
+        <ul class="checklist">
+          <li>Consultations by appointment</li>
+          <li>Online/phone options available</li>
+          <li>Transparent timelines &amp; fees</li>
+        </ul>
+        <div style="display:flex;gap:10px;margin-top:14px;">
+          <a class="btn btn-primary" href="auth/login.html">Book Now</a>
+          <a class="btn btn-call" href="tel:+63-912-345-6789">Call Now</a>
+        </div>
+      </div>
+      <div class="map-card">
+      <iframe
+      src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2295.167722178362!2d121.02743449971632!3d14.656133209745667!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3397b6e4a7522b1f%3A0x7ea2e87a0e42f438!2sThe%20Law%20Firm%20of%20Talampas%20%26%20Associates!5e0!3m2!1sen!2sph!4v1759642175147!5m2!1sen!2sph"
+      title="Map to Talampas &amp; Associates"
+      loading="lazy"
+      referrerpolicy="no-referrer-when-downgrade">
+      </iframe>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <small>© <span id="year"></span> Talampas &amp; Associates</small>
+      <div class="footer-links">
+        <a href="#services">Services</a>
+        <a href="#attorneys">Attorneys</a>
+        <a href="#contact">Contact</a>
+        <a href="auth/login.html">Log In</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Landing scripts -->
+  <script src="landing.js" defer></script>
+</body>
+</html>

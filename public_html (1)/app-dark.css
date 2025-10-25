@@ -1,0 +1,945 @@
+/* =========================================================
+   Talampas & Associates — App Shell (Light / Dark)
+   ========================================================= */
+
+/* ---------- Design tokens (Light) ---------- */
+:root{
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --text: #1b1f2a;
+  --muted: #6b7280;
+  --border: #e9e7e2;
+
+  --brand: #5b8cff;   /* blue */
+  --accent: #7c6cff;  /* purple */
+  --ok: #22c55e;
+  --warn: #f59e0b;
+  --danger: #ef4444;
+
+  --shadow: 0 12px 30px rgba(0,0,0,.08);
+  --radius: 16px;
+}
+
+/* ---------- Dark theme override ---------- */
+.theme-dark{
+  --bg: #0b1020;
+  --panel: #11182f;
+  --text: #e7ecff;
+  --muted: #8b96b7;
+  --border: rgba(255,255,255,.08);
+  --shadow: 0 12px 34px rgba(0,0,0,.45);
+}
+
+/* ---------- Base ---------- */
+*{ box-sizing:border-box; }
+html,body{ height:100%; }
+body{
+  margin:0;
+  font: 14px/1.45 "Inter", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  display:flex;
+}
+
+/* =========================================================
+   Sidebar
+   ========================================================= */
+.sidebar{
+  width:240px; min-height:100%;
+  color:#e7ecff; position:sticky; top:0;
+  border-right:1px solid rgba(255,255,255,.06);
+  display:flex; flex-direction:column; gap:14px; padding:16px 12px;
+  background: linear-gradient(180deg, #4f5d9a, #2e3669); /* light */
+}
+.theme-dark .sidebar{
+  background: linear-gradient(180deg, #0e1530, #0b1020); /* dark */
+}
+
+.brand{ display:flex; gap:10px; align-items:center; padding:6px 8px; }
+.brand-logo{ width:32px; height:32px; border-radius:8px; object-fit:cover; background:#fff; }
+.brand-title{ font-weight:800; font-size:13px; line-height:1.1; }
+.brand-role{ font-size:11px; opacity:.75; }
+
+.nav{ display:flex; flex-direction:column; gap:4px; }
+.nav-link{
+  display:flex; align-items:center; gap:10px;
+  padding:10px 12px; border-radius:12px; color:#c7d2fe; text-decoration:none;
+}
+.nav-link .icon{ font-size:16px; }
+.nav-link:hover{ background: rgba(255,255,255,.06); }
+.nav-link.active{ background: rgba(91,140,255,.2); color:#fff; }
+
+.nav-group{ display:grid; gap:6px; }
+.nav-sub{ display:grid; gap:4px; margin-left:28px; padding-left:6px; border-left:1px solid rgba(255,255,255,.08); }
+.nav-sublink{ display:block; padding:8px 10px; border-radius:10px; color:#c7d2fe; text-decoration:none; font-size:13px; }
+.nav-sublink:hover{ background: rgba(255,255,255,.06); }
+.nav-sublink.active{ background: rgba(91,140,255,.18); color:#fff; }
+.nav-sub[hidden]{ display:none !important; }
+
+.nav-toggle{
+  width:100%; display:flex; align-items:center; gap:10px;
+  padding:10px 12px; border:none; background:transparent; color:#c7d2fe;
+  border-radius:12px; cursor:pointer; font:inherit; text-align:left;
+}
+.nav-toggle:hover{ background: rgba(255,255,255,.06); }
+.nav-toggle:focus{ outline:none; box-shadow:none; }
+.nav-toggle.active{ background: rgba(91,140,255,.2); color:#fff; }
+.nav-toggle .chev{ opacity:.8; transition: transform .2s; }
+.nav-group.open .nav-toggle .chev{ transform: rotate(180deg); }
+
+.sidebar-footer{ margin-top:auto; padding:6px 8px; }
+
+/* =========================================================
+   App area / Top bar
+   ========================================================= */
+.app{ flex:1; display:flex; flex-direction:column; min-width:0; }
+
+.topbar{
+  height:60px; display:flex; align-items:center; gap:12px;
+  padding:0 16px; background:var(--panel); border-bottom:1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+.flex-spacer{ flex:1; }
+
+.back{
+  background:transparent; border:1px solid var(--border); color:var(--text);
+  height:34px; padding:0 10px; border-radius:10px; cursor:pointer;
+}
+.search-wrap{ display:flex; gap:8px; align-items:center; flex:1; max-width:780px; }
+.search-wrap input[type="search"]{
+  width:100%; height:38px; border-radius:12px; border:1px solid var(--border);
+  background:var(--bg); color:var(--text); padding:0 12px;
+}
+
+.topbar-actions{ display:flex; align-items:center; gap:10px; }
+.presence{ width:10px; height:10px; border-radius:50%; background:#22c55e; }
+.avatar{
+  width:32px; height:32px; border-radius:50%;
+  display:grid; place-items:center;
+  background: linear-gradient(135deg, var(--accent), var(--brand));
+  color:#fff; font-weight:700;
+}
+
+/* Bell / notifications */
+.icon{ width:20px; height:20px; vertical-align:middle; display:inline-block; }
+.notify-btn{
+  position:relative; background:transparent; border:none; color:var(--text);
+  width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  cursor:pointer; transition:background .2s, color .2s;
+}
+.notify-btn:hover{ background: rgba(255,255,255,.08); color: var(--brand); }
+.badge-count{
+  position:absolute; top:6px; right:8px; background:#ef4444; color:#fff;
+  font-size:10px; font-weight:700; padding:2px 6px; border-radius:999px;
+  box-shadow:0 0 8px rgba(0,0,0,.3);
+}
+
+
+
+/* --- Notification Bell Dropdown --- */
+.notify-btn {
+  position: relative;
+  background: none;
+  border: none;
+  color: var(--text);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.badge-count {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: var(--danger);
+  color: #fff;
+  border-radius: 50%;
+  padding: 2px 6px;
+  font-size: 11px;
+  font-weight: 600;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+}
+
+.notif-list {
+  position: absolute;
+  top: 40px;
+  right: 0;
+  background: var(--panel);
+  border-radius: 8px;
+  list-style: none;
+  margin: 0;
+  padding: 6px 0;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+  width: 260px;
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 999;
+}
+
+.notif-list li {
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(255,255,255,.05);
+}
+
+.notif-list li:last-child {
+  border-bottom: none;
+}
+
+.notif-title {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.notif-meta {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.notif-list li.empty {
+  text-align: center;
+  color: var(--muted);
+}
+
+
+/* ===== Theme switch (Light | Dark) ===== */
+.theme-control{
+  display:flex; align-items:center; gap:10px;
+  position:relative; z-index:10;          /* stays clickable above overlays */
+}
+.theme-label{
+  font-size:12px; letter-spacing:.12em; text-transform:uppercase;
+  color: var(--muted);
+  user-select:none;
+}
+
+/* Switch shell */
+.switch{
+  --h: 24px;
+  --w: 48px;
+  --pad: 3px;
+
+  display:inline-flex; align-items:center; cursor:pointer;
+  isolation:isolate;                       /* keeps inner shadow crisp */
+}
+.switch input{
+  position:absolute; inset:0; width:100%; height:100%;
+  opacity:0; pointer-events:none;          /* native input hidden, but keeps a11y */
+}
+
+/* Track */
+.switch .track{
+  width:var(--w); height:var(--h);
+  border-radius:999px;
+  background: #e7ebf5;
+  border: 2px solid #3b82f6;
+  box-shadow: 0 0 0 6px rgba(59,130,246,.15);  /* soft outer glow like your example */
+  display:inline-flex; align-items:center;
+  padding:var(--pad);
+  transition: background .2s ease, border-color .2s ease, box-shadow .2s ease;
+}
+.theme-dark .switch .track{
+  background:#2a3244; border-color:#4c6fff; box-shadow:0 0 0 6px rgba(76,111,255,.15);
+}
+
+/* Thumb */
+.switch .thumb{
+  width: calc(var(--h) - var(--pad)*2);
+  height: calc(var(--h) - var(--pad)*2);
+  border-radius:50%;
+  background:#6aa8ff;                      /* light mode thumb */
+  transition: transform .22s ease, background .2s ease, box-shadow .2s ease;
+  box-shadow: inset 0 0 0 2px #2563eb;
+}
+.theme-dark .switch .thumb{
+  background:#6aa8ff; box-shadow: inset 0 0 0 2px #2a5fff;
+}
+
+/* Checked state: move thumb right */
+.switch input:checked + .track .thumb{
+  transform: translateX(calc(var(--w) - var(--h)));
+}
+
+/* Focus ring for keyboard users */
+.switch:focus-within .track{
+  box-shadow: 0 0 0 6px rgba(59,130,246,.25);
+}
+
+/* Ensure it remains clickable even if some parent uses pointer-events */
+.theme-control, .theme-control * { pointer-events:auto; }
+
+/* =========================================================
+   Buttons
+   ========================================================= */
+.btn{
+  display:inline-flex; align-items:center; gap:8px; height:36px; padding:0 14px;
+  border-radius:12px; border:none; background:var(--brand); color:#fff; cursor:pointer;
+  box-shadow:0 10px 25px rgba(91,140,255,.25);
+}
+.btn.ghost{ background:transparent; color:var(--text); border:1px solid var(--border); box-shadow:none; }
+.btn.sm{ height:32px; padding:0 10px; }
+
+/* =========================================================
+   Content / Cards / Stats
+   ========================================================= */
+.content{ padding:20px; display:grid; gap:20px; }
+
+.card{
+  background:var(--panel); border:1px solid var(--border);
+  border-radius:var(--radius); box-shadow:var(--shadow); padding:16px;
+}
+.card.empty{ text-align:center; padding:40px; }
+.card-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px; }
+.card h3{ margin:0; font-size:16px; }
+
+.grid{ display:grid; gap:16px; }
+.grid-2{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.grid-4{ grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width:1100px){ .grid-4{ grid-template-columns: repeat(2, 1fr); } }
+@media (max-width:700px){ .grid-4,.grid-2{ grid-template-columns: 1fr; } }
+
+.stat{
+  background:var(--panel); border:1px solid var(--border);
+  border-radius:14px; padding:16px; box-shadow:var(--shadow);
+}
+.stat .label{ font-size:12px; color:var(--muted); letter-spacing:.2px; }
+.stat .value{ font-weight:800; font-size:24px; margin-top:6px; }
+.stat .delta{ margin-top:6px; font-size:12px; color:var(--muted); }
+.stat .delta.up{ color:var(--ok); }
+.stat .delta.warn{ color:var(--warn); }
+
+/* =========================================================
+   Lists / Tables / Badges
+   ========================================================= */
+.list{ display:grid; gap:10px; }
+.item{
+  display:grid; grid-template-columns:1fr auto; align-items:center; gap:10px;
+  background:var(--bg); border:1px solid var(--border); padding:12px; border-radius:12px;
+}
+.item .title{ font-weight:600; }
+.item .meta{ color:var(--muted); font-size:12px; }
+
+.badge{
+  font-size:11px; font-weight:700; padding:6px 8px; border-radius:999px;
+  color:#fff; background:var(--accent);
+}
+.badge.alt{ background:var(--brand); }
+
+.table{ width:100%; border-collapse:collapse; }
+.table th,.table td{ padding:10px 12px; border-bottom:1px solid var(--border); text-align:left; vertical-align:middle; }
+.table thead th{ color:var(--muted); font-weight:600; font-size:12px; text-transform:uppercase; }
+
+/* =========================================================
+   Profile dropdown
+   ========================================================= */
+.icon-btn.profile-btn{
+  width:36px; height:36px; border-radius:50%;
+  border:1px solid var(--border); background:transparent; color:var(--text);
+  display:grid; place-items:center; cursor:pointer;
+}
+.icon-btn.profile-btn:focus{ outline:none; box-shadow:none; }
+
+.dropdown{ position:relative; }
+.menu{
+  position:absolute; right:0; top:44px; z-index:50;
+  min-width:200px; background:var(--panel); border:1px solid var(--border);
+  border-radius:12px; box-shadow:var(--shadow); padding:8px;
+  animation:menuIn .12s ease-out;
+}
+.menu[hidden]{ display:none !important; }
+.menu-header{ font-size:12px; color:var(--muted); padding:6px 8px 8px; }
+.menu hr{ border:0; height:1px; background:var(--border); margin:6px 0; }
+.menu-item{ display:block; padding:10px 10px; border-radius:10px; color:var(--text); text-decoration:none; font-size:14px; }
+.menu-item:hover{ background:rgba(255,255,255,.06); }
+.menu-item.danger{ color:#ffb4b4; }
+@keyframes menuIn{ from{ opacity:0; transform:translateY(-4px);} to{ opacity:1; transform:translateY(0);} }
+
+/* Keep name + role pill aligned */
+#profileDropdown .signed-as{
+  display:flex; align-items:center; gap:8px; flex-wrap:wrap; line-height:1.4;
+}
+#profileDropdown .role-pill{ margin:0; }
+
+/* =========================================================
+   Dialogs / Modals
+   ========================================================= */
+dialog.modal{
+  border:none; border-radius:14px; padding:18px 18px 14px;
+  max-width:520px; width:96%; background:var(--panel); color:var(--text);
+  box-shadow:0 24px 60px rgba(0,0,0,.2);
+}
+dialog.modal::backdrop{ background: rgba(15,23,42,.45); }
+dialog.modal h4{ margin:0 0 12px; font-weight:800; }
+dialog.modal label{ display:grid; gap:6px; margin:8px 0; }
+dialog.modal input, dialog.modal select{
+  height:42px; border:1px solid var(--border); border-radius:10px; padding:0 12px; background:var(--panel); color:var(--text);
+}
+dialog.modal .grid2{ display:grid; gap:10px; grid-template-columns:1fr 1fr; }
+@media (max-width:520px){ dialog.modal .grid2{ grid-template-columns:1fr; } }
+dialog.modal .actions{ display:flex; justify-content:flex-end; gap:10px; margin-top:12px; }
+.btn.small{ height:34px; padding:0 12px; font-size:14px; }
+.btn.ghost{ background:transparent; border:1px solid var(--border); }
+
+/* modal base */
+.modal::backdrop { background: rgba(0,0,0,.45); }
+.modal .modal-card{
+  width: min(680px, 92vw);
+  border: none;
+  padding: 0;
+  background: var(--panel);
+  color: var(--text);
+  border-radius: 12px;
+  box-shadow: 0 12px 28px rgba(0,0,0,.32);
+}
+.modal-header{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 16px; border-bottom:1px solid rgba(0,0,0,.08);
+}
+.modal-body{ padding:16px; display:grid; gap:12px; }
+.modal-actions{
+  display:flex; gap:8px; justify-content:flex-end; padding:12px 16px;
+  border-top:1px solid rgba(0,0,0,.08);
+}
+.field{ display:grid; gap:6px; }
+.field.two{ grid-template-columns:1fr 1fr; gap:12px; }
+.read{
+  background: rgba(0,0,0,.04);
+  padding:10px 12px; border-radius:8px; min-height:40px;
+}
+.icon-btn{ background:none;border:none;font-size:22px;line-height:1;cursor:pointer;color:var(--muted); }
+.btn{ padding:8px 14px;border-radius:8px;border:none;cursor:pointer;background:rgba(0,0,0,.08);color:var(--text); }
+.btn.primary{ background: var(--primary); color: #fff; }
+.btn.danger{ background: var(--danger); color: #fff; }
+.err{ color: var(--danger); display:block; min-height:1em; }
+.hint{ color: var(--muted); }
+
+/* ----- Notif dropdown items with actions ----- */
+.notify-dropdown .notif-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: .5rem .75rem;
+  padding: .75rem .5rem;
+  border-bottom: 1px solid var(--border, #e9eef5);
+}
+.notify-dropdown .notif-item:hover { background: var(--hover, rgba(0,0,0,.03)); }
+.notify-dropdown .notif-title { font-weight: 600; line-height: 1.25; }
+.notify-dropdown .notif-sub { font-size: .85rem; color: var(--muted, #6b7280); }
+.notify-dropdown .notif-actions { display: flex; gap: .5rem; align-items: center; }
+.notify-dropdown .btn-pill {
+  border: 1px solid var(--border, #d1d5db);
+  border-radius: 999px;
+  padding: .35rem .8rem;
+  font-size: .85rem;
+  background: #fff;
+}
+.notify-dropdown .btn-pill--primary {
+  border-color: transparent;
+  background: var(--primary, #2563eb);
+  color: #fff;
+}
+
+/* ----- bigger dialog ----- */
+.modal--lg { width: min(880px, 92vw); }
+.modal-body { padding: 16px 18px; }
+.modal-header { display:flex; align-items:center; gap:.75rem; margin-bottom: .75rem;}
+.modal-header h3 { margin:0; font-size:1.1rem; }
+.modal-close { background:transparent; border:0; font-size:1.25rem; line-height:1; cursor:pointer;}
+.grid-2 { display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
+.field { display:flex; flex-direction:column; gap:6px; }
+.field > span { font-size:.85rem; color:var(--muted, #6b7280); }
+.field input[readonly], .field textarea[readonly] {
+  background: var(--surface-2, #f7f8fb);
+}
+.help-text { font-size:.8rem; color: var(--muted, #6b7280); margin-top: 4px; }
+.modal-footer { display:flex; gap:.5rem; margin-top: 12px; }
+.flex-1 { flex: 1 1 auto; }
+
+/* light/dark tokens (keeps your current theme working) */
+body.theme-dark .notify-dropdown .notif-item { border-color: rgba(255,255,255,.06); }
+body.theme-dark .notify-dropdown .notif-item:hover { background: rgba(255,255,255,.04); }
+body.theme-dark .field input[readonly],
+body.theme-dark .field textarea[readonly] { background: rgba(255,255,255,.06); }
+
+/* =========================================================
+   ROLE PILLS
+   - Light mode: gradient chips (Employee/Client)
+   - Admin: gold glow (both themes)
+   - Dark mode: subtle translucent chips
+   ========================================================= */
+
+/* Base pill */
+.role-pill{
+  display:inline-flex; align-items:center; justify-content:center;
+  padding:3px 12px; border-radius:9999px;
+  font:700 12px/1 system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
+  white-space:nowrap; border:none; box-shadow:0 1px 2px rgba(0,0,0,.15);
+}
+.role-pill:empty{ display:none !important; }
+
+/* Light — your requested gradients */
+:not(.theme-dark) .role-pill.employee{
+  background:linear-gradient(135deg,#2563eb,#60a5fa);
+  color:#fff;
+  border:1px solid #bfd7ff;
+}
+:not(.theme-dark) .role-pill.client{
+  background:linear-gradient(135deg,#16a34a,#34d399);
+  color:#fff;
+  border:1px solid #a7f3d0;
+}
+
+/* Admin — luminous gold (both themes) */
+.role-pill.admin{
+  background:linear-gradient(135deg,#f59e0b 0%,#facc15 50%,#fde047 100%);
+  color:#111; font-weight:700;
+  box-shadow:0 0 8px rgba(250,204,21,.5), inset 0 0 6px rgba(255,255,255,.25);
+  animation:adminPulse 2.5s ease-in-out infinite;
+}
+@keyframes adminPulse{
+  0%{   box-shadow:0 0 6px rgba(250,204,21,.4); }
+  50%{  box-shadow:0 0 14px rgba(250,204,21,.85); }
+  100%{ box-shadow:0 0 6px rgba(250,204,21,.4); }
+}
+
+/* Dark — subtle translucent chips */
+.theme-dark .role-pill.employee{
+  background:rgba(59,130,246,.16); color:#93c5fd; border:1px solid rgba(59,130,246,.35);
+}
+.theme-dark .role-pill.client{
+  background:rgba(16,185,129,.16); color:#6ee7b7; border:1px solid rgba(16,185,129,.3);
+}
+/* Admin already glowing above */
+
+/* =========================================================
+   Utilities
+   ========================================================= */
+.table-left th, .table-left td{ text-align:left !important; vertical-align:middle; }
+.hidden{ display:none !important; }
+
+/* Make sure the button is clickable and not under an overlay */
+.card-head { position: relative; z-index: 0; }
+.card-head .btn { position: relative; z-index: 2; pointer-events: auto; }
+
+/* In case some parent uses pointer-events:none */
+.card-head > * { pointer-events: auto; }
+
+/* Ensure menus don't block unrelated clicks */
+.menu { z-index: 50; }
+
+/* Theme toggle button */
+.theme-toggle-btn{
+  display:inline-flex; align-items:center; justify-content:center;
+  width:38px; height:38px; border-radius:999px;
+  background:transparent; border:1px solid var(--border);
+  color:var(--text); cursor:pointer;
+  transition:background .2s, color .2s, border-color .2s, box-shadow .2s;
+}
+.theme-toggle-btn:hover{ background:rgba(0,0,0,.04); }
+.theme-dark .theme-toggle-btn:hover{ background:rgba(255,255,255,.08); }
+
+.theme-toggle-btn .icon{ width:20px; height:20px; }
+.theme-toggle-btn .sun{ display:inline; }
+.theme-toggle-btn .moon{ display:none; }
+
+/* when dark → show moon, hide sun */
+.theme-dark .theme-toggle-btn .sun{ display:none; }
+.theme-dark .theme-toggle-btn .moon{ display:inline; }
+
+/* --- FIX PACK additions (safe to append) --- */
+
+/* Action buttons in tables (so they look consistent & clickable) */
+.table td.actions {
+  white-space: nowrap;
+}
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  height: 30px;
+  padding: 0 10px;
+  margin-right: 6px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 12px;
+}
+.action-btn:hover {
+  background: rgba(255,255,255,.06);
+}
+.action-btn.ghost {
+  opacity: .95;
+}
+.action-btn.danger {
+  border-color: rgba(239,68,68,.5);
+  color: #ffb4b4;
+}
+
+/* Ensure clickable controls stay above any nearby overlays */
+.theme-control, .dropdown, .card-head .btn, .action-btn {
+  position: relative;
+  z-index: 2;
+  pointer-events: auto;
+}
+
+.badge {
+  display:inline-block;
+  padding:3px 8px;
+  border-radius:12px;
+  font-size:12px;
+  text-transform:capitalize;
+}
+.badge.pending  { background:#facc15; color:#111; }
+.badge.accepted { background:#22c55e; color:#fff; }
+.badge.rejected { background:#ef4444; color:#fff; }
+
+
+/* ===== Appointments page styles (scoped) ===== */
+#page-appointments .card{
+  background: rgba(17,24,39,.75);            /* slate-900 w/alpha */
+  border: 1px solid rgba(148,163,184,.15);   /* slate-400/15 */
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.25);
+}
+#page-appointments .card-head h3{
+  margin: 0 0 10px;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: .2px;
+}
+
+/* Form grid */
+#page-appointments .grid2{
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0,1fr));
+  gap: 12px;
+}
+#page-appointments .span2{ grid-column: 1 / -1; }
+
+#page-appointments label{
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--muted, #94a3b8);
+}
+
+/* Inputs */
+#page-appointments select,
+#page-appointments input[type="date"],
+#page-appointments input[type="time"],
+#page-appointments textarea{
+  background: rgba(2,6,23,.75);              /* slate-950/75 */
+  border: 1px solid rgba(148,163,184,.22);   /* slate-400/22 */
+  color: inherit;
+  padding: 10px 12px;
+  border-radius: 10px;
+  outline: none;
+}
+#page-appointments textarea{ resize: vertical; min-height: 84px; }
+
+/* Submit button */
+#page-appointments .btn{
+  background: #3b82f6;                       /* blue-500 */
+  color: #fff;
+  border: 0;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+#page-appointments .btn:hover{ filter: brightness(1.05); }
+
+/* Status message */
+#page-appointments #apt_msg{ color: var(--muted, #94a3b8); }
+
+/* Table */
+#page-appointments .table{
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 8px;
+}
+#page-appointments .table th{
+  text-align: left;
+  font-weight: 600;
+  color: var(--muted, #93a3b8);
+  padding: 6px 8px;
+}
+#page-appointments .table td{
+  background: rgba(2,6,23,.65);
+  border: 1px solid rgba(148,163,184,.15);
+  padding: 10px 8px;
+}
+#page-appointments .table tr td:first-child{
+  border-left: 1px solid rgba(148,163,184,.15);
+  border-radius: 10px 0 0 10px;
+}
+#page-appointments .table tr td:last-child{
+  border-right: 1px solid rgba(148,163,184,.15);
+  border-radius: 0 10px 10px 0;
+}
+
+/* Status badges (pending/accepted/rejected) */
+#page-appointments .badge{
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  text-transform: capitalize;
+}
+#page-appointments .badge.pending  { background:#facc15; color:#111; }
+#page-appointments .badge.accepted { background:#22c55e; color:#fff; }
+#page-appointments .badge.rejected { background:#ef4444; color:#fff; }
+
+/* Responsive */
+@media (max-width: 1000px){
+  #page-appointments .grid2{ grid-template-columns: repeat(2, minmax(0,1fr)); }
+}
+@media (max-width: 640px){
+  #page-appointments .grid2{ grid-template-columns: 1fr; }
+}
+
+/* ==========================================================================
+   APPOINTMENTS PAGE (dual theme)
+   Scoped styles — consistent with rest of app
+   ========================================================================== */
+
+/* ---- Shared layout ---- */
+#page-appointments .card {
+  border-radius: 16px;
+  padding: 16px;
+  border: 1px solid transparent;
+  box-shadow: 0 8px 24px rgba(0,0,0,.15);
+  transition: background .3s, border-color .3s, color .3s;
+}
+
+#page-appointments .card-head h3 {
+  margin: 0 0 10px;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: .2px;
+}
+
+/* ---- Form grid ---- */
+#page-appointments .grid2 {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0,1fr));
+  gap: 12px;
+}
+#page-appointments .span2 { grid-column: 1 / -1; }
+
+#page-appointments label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+}
+
+/* ---- Inputs ---- */
+#page-appointments select,
+#page-appointments input[type="date"],
+#page-appointments input[type="time"],
+#page-appointments textarea {
+  width: 100%;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 10px 12px;
+  outline: none;
+  transition: border-color .25s, background .25s;
+}
+#page-appointments textarea { resize: vertical; min-height: 84px; }
+
+/* ---- Button ---- */
+#page-appointments .btn {
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: filter .25s;
+}
+#page-appointments .btn:hover { filter: brightness(1.05); }
+
+/* ---- Table ---- */
+#page-appointments .table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 8px;
+}
+#page-appointments .table th {
+  text-align: left;
+  font-weight: 600;
+  padding: 6px 8px;
+}
+#page-appointments .table td {
+  padding: 10px 8px;
+  border-radius: 10px;
+}
+
+/* ---- Status badges ---- */
+#page-appointments .badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  text-transform: capitalize;
+  font-weight: 600;
+}
+#page-appointments .badge.pending  { background:#facc15; color:#111; }
+#page-appointments .badge.accepted { background:#22c55e; color:#fff; }
+#page-appointments .badge.rejected { background:#ef4444; color:#fff; }
+
+/* ---- Responsive ---- */
+@media (max-width: 1000px){
+  #page-appointments .grid2 { grid-template-columns: repeat(2, minmax(0,1fr)); }
+}
+@media (max-width: 640px){
+  #page-appointments .grid2 { grid-template-columns: 1fr; }
+}
+
+/* ==========================================================================
+   DARK THEME
+   ========================================================================== */
+.theme-dark #page-appointments .card {
+  background: rgba(17,24,39,.85);
+  border-color: rgba(148,163,184,.15);
+  color: #e7ecff;
+}
+.theme-dark #page-appointments label { color: #94a3b8; }
+
+.theme-dark #page-appointments select,
+.theme-dark #page-appointments input[type="date"],
+.theme-dark #page-appointments input[type="time"],
+.theme-dark #page-appointments textarea {
+  background: rgba(2,6,23,.75);
+  border-color: rgba(148,163,184,.25);
+  color: #e7ecff;
+}
+.theme-dark #page-appointments .btn {
+  background: #3b82f6;
+  color: #fff;
+}
+.theme-dark #page-appointments .table th { color: #a5b4fc; }
+.theme-dark #page-appointments .table td {
+  background: rgba(2,6,23,.65);
+  border: 1px solid rgba(148,163,184,.15);
+}
+
+/* ==========================================================================
+   LIGHT THEME
+   ========================================================================== */
+.theme-light #page-appointments .card {
+  background: #ffffff;
+  border-color: rgba(0,0,0,.08);
+  color: #111827;
+}
+.theme-light #page-appointments label { color: #475569; }
+
+.theme-light #page-appointments select,
+.theme-light #page-appointments input[type="date"],
+.theme-light #page-appointments input[type="time"],
+.theme-light #page-appointments textarea {
+  background: #f9fafb;
+  border-color: rgba(0,0,0,.15);
+  color: #111827;
+}
+.theme-light #page-appointments .btn {
+  background: #2563eb;
+  color: #fff;
+}
+.theme-light #page-appointments .table th { color: #334155; }
+.theme-light #page-appointments .table td {
+  background: #f8fafc;
+  border: 1px solid rgba(0,0,0,.06);
+}
+
+.notify-btn { position: relative; display:inline-flex; align-items:center; gap:8px; }
+.notify-btn .icon { width:20px; height:20px; }
+.badge-count{
+  position:absolute; top:-4px; right:-6px;
+  min-width:18px; padding:2px 6px; border-radius:999px;
+  background: var(--danger, #e5484d); color:#fff;
+  font-size:11px; font-weight:700; line-height:1; text-align:center;
+  box-shadow:0 2px 6px rgba(0,0,0,.25);
+}
+
+/* === Notification dropdown polish === */
+#notifyMenu.notify-dropdown{
+  background: var(--panel, #fff);
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.12);
+  padding: 6px;
+}
+
+.notify-dropdown .notif-item{
+  display: grid;
+  grid-template-columns: 1fr auto; /* text left, actions right */
+  grid-template-rows: auto auto;
+  align-items: center;
+  column-gap: .75rem;
+  row-gap: .35rem;
+  padding: .6rem .5rem;
+  border-radius: 8px;
+  border: 1px solid transparent;         /* so hover doesn't shift */
+}
+
+.notify-dropdown .notif-item:hover{
+  background: var(--hover, rgba(0,0,0,.04));
+  border-color: var(--border, #e5e7eb);
+}
+
+.notify-dropdown .notif-title{
+  grid-column: 1 / 2;
+  grid-row: 1 / 2;
+  font-weight: 700;
+  line-height: 1.2;
+  margin-right: .5rem;
+}
+
+.notify-dropdown .notif-sub{
+  grid-column: 1 / 2;
+  grid-row: 2 / 3;
+  font-size: .85rem;
+  color: var(--muted, #6b7280);
+}
+
+.notify-dropdown .notif-actions{
+  grid-column: 2 / 3;
+  grid-row: 1 / 3;            /* span both lines, pin on right */
+  display: flex;
+  gap: .5rem;
+  align-items: center;
+}
+
+.notify-dropdown .btn-pill{       /* keep them tidy */
+  border: 1px solid var(--border, #d1d5db);
+  border-radius: 999px;
+  padding: .32rem .75rem;
+  font-size: .85rem;
+  line-height: 1;
+  white-space: nowrap;
+}
+.notify-dropdown .btn-pill--primary{
+  border-color: transparent;
+  background: var(--primary, #2563eb);
+  color: #fff;
+}
+
+/* Dropdown placement safety on small screens */
+@media (max-width: 480px){
+  #notifyMenu.notify-dropdown{ width: 92vw !important; right: 4vw !important; }
+}
+
+/* Dark theme tweaks */
+body.theme-dark #notifyMenu.notify-dropdown{
+  background: #111827;
+  border-color: rgba(255,255,255,.08);
+  box-shadow: 0 10px 30px rgba(0,0,0,.6);
+}
+body.theme-dark .notify-dropdown .notif-item:hover{
+  background: rgba(255,255,255,.06);
+  border-color: rgba(255,255,255,.1);
+}
+body.theme-dark .notify-dropdown .notif-sub{ color: rgba(255,255,255,.6); }

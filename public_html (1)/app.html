@@ -1,0 +1,472 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Talampas &amp; Associates — App</title>
+
+  <!-- Inter font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Base styles -->
+  <link rel="stylesheet" href="app-dark.css?v=38">
+</head>
+<body>
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="sidebar">
+    <div class="brand">
+      <img class="brand-logo" src="assets/logo.png" alt="" onerror="this.style.display='none'">
+      <div class="brand-meta">
+        <div class="brand-title">Talampas &amp; Associates</div>
+        <div class="brand-role" id="sidebarRole">ROLE</div>
+      </div>
+    </div>
+
+    <nav class="nav">
+      <!-- Dashboard -->
+      <a class="nav-link active" href="#" data-page="dashboard">
+        <span class="icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M12 3 2 12h3v8h6v-5h2v5h6v-8h3z"/></svg>
+        </span>
+        <span>Dashboard</span>
+      </a>
+
+      <!-- Cases -->
+      <a class="nav-link" href="#" data-page="cases">
+        <span class="icon">
+          <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M10 4h4a2 2 0 0 1 2 2v1h3a2 2 0 0 1 2 2v3H3V9a2 2 0 0 1 2-2h3V6a2 2 0 0 1 2-2Zm4 3V6h-4v1zM3 13h18v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+        </span>
+        <span>Cases</span>
+      </a>
+
+      <!-- Calendar -->
+      <a class="nav-link" href="#" data-page="schedules">
+        <span class="icon">
+          <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M7 2v3h10V2h2v3h1a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h1V2h2Zm14 9H3v9h18v-9Z"/></svg>
+        </span>
+        <span>Calendar</span>
+      </a>
+
+      <!-- Chat -->
+      <a class="nav-link" href="chat.html">
+        <span class="icon">
+          <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M4 4h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H8l-4 3v-3H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/></svg>
+        </span>
+        <span>Chat</span>
+      </a>
+
+      <!-- PROFILES (admin+employee) -->
+      <div class="nav-group" id="nav-profiles-group" data-roles="admin,employee">
+        <button class="nav-link nav-toggle" type="button" data-toggle="profiles">
+          <span class="icon">
+            <svg viewBox="0 0 24 24" width="16" height="16">
+              <path fill="currentColor" d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5Zm0 2c-4.42 0-8 2.24-8 5v1h16v-1c0-2.76-3.58-5-8-5Z"/>
+            </svg>
+          </span>
+          <span>Profiles</span>
+          <span class="chev" aria-hidden="true">▾</span>
+        </button>
+
+        <div class="nav-sub" id="nav-profiles" hidden>
+          <a class="nav-sublink" href="#" data-page="profiles" data-roles="admin">All Users</a>
+          <a class="nav-sublink" href="#" data-page="profiles-lawyers" data-roles="admin,employee">Lawyers</a>
+          <a class="nav-sublink" href="#" data-page="profiles-clients" data-roles="admin,employee">Clients</a>
+          <a class="nav-sublink" href="#" data-page="profiles-archived" data-roles="admin">Archived</a>
+        </div>
+      </div>
+
+      <!-- Appointments (client only) -->
+       <a class="nav-link" id="nav-appointments" data-roles="client" href="#" data-page="appointments">
+  <span class="icon" aria-hidden="true">
+       <svg viewBox="0 0 24 24" width="16" height="16">
+       <path fill="currentColor" d="M7 2v3h10V2h2v3h1a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h1V2h2Zm14 9H3v9h18v-9Zm-12 2h2v2H9v-2Zm4 0h2v2h-2v-2Zm4 0h2v2h-2v-2Z"/>
+      </svg>
+      </span>
+       <span>Appointments</span>
+        </a>
+    </nav>
+  </aside>
+
+  <!-- ===== APP WRAPPER ===== -->
+  <div class="app">
+    <!-- ===== TOPBAR ===== -->
+    <header class="topbar">
+      <div class="flex-spacer"></div>
+      <div class="topbar-actions">
+        <!-- Notifications -->
+        <button class="notify-btn" title="Notifications">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="icon">
+            <path fill="currentColor" d="M12 24c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6.3-5c.8 0 1.5-.7 1.5-1.5S19.1 16 18.3 16H18V11c0-3.1-1.6-5.7-4.5-6.3V4a1.5 1.5 0 1 0-3 0v.7C7.6 5.3 6 7.9 6 11v5h-.3c-.8 0-1.5.7-1.5 1.5S4.9 19 5.7 19H18.3z"/>
+          </svg>
+          <span class="badge-count"></span>
+        </button>
+
+        <!-- Theme switch -->
+        <div id="themeControl" class="theme-control">
+          <span class="theme-label">LIGHT</span>
+          <label class="switch" aria-label="Toggle dark mode">
+            <input id="themeCheckbox" type="checkbox" />
+            <span class="track" aria-hidden="true">
+              <span class="thumb"></span>
+            </span>
+          </label>
+          <span class="theme-label">DARK</span>
+        </div>
+
+        <!-- Profile dropdown -->
+        <div class="dropdown">
+          <button id="profileBtn" class="icon-btn profile-btn" aria-expanded="false" aria-haspopup="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5Zm0 2c-4.418 0-8 2.239-8 5v1h16v-1c0-2.761-3.582-5-8-5Z" fill="currentColor"/>
+            </svg>
+          </button>
+
+          <div id="profileDropdown" class="menu" hidden>
+            <div class="menu-header signed-as" id="signedAs"></div>
+            <hr>
+            <a href="#" class="menu-item" id="menuProfile">Profile</a>
+            <hr>
+            <a href="#" class="menu-item danger" id="btnLogout">Log out</a>
+          </div>
+        </div> <!-- /.dropdown -->
+      </div> <!-- /.topbar-actions -->
+    </header> <!-- /.topbar -->
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <main class="content">
+
+      <!-- DASHBOARD -->
+      <section class="page page-dashboard">
+        <div class="grid grid-4" id="dash-stats">
+          <article class="stat">
+            <div class="label">Total Cases</div>
+            <div class="value" id="stat-cases">0</div>
+            <div class="delta" id="stat-cases-sub">—</div>
+          </article>
+          <article class="stat">
+            <div class="label">Active Clients</div>
+            <div class="value" id="stat-clients">0</div>
+            <div class="delta">unique</div>
+          </article>
+          <article class="stat">
+            <div class="label">Hearings (14 days)</div>
+            <div class="value" id="stat-hearings14">0</div>
+            <div class="delta">calendar</div>
+          </article>
+          <article class="stat">
+            <div class="label">Pending Inquiries</div>
+            <div class="value" id="stat-pending">0</div>
+            <div class="delta">follow up</div>
+          </article>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <h3>Upcoming Events (next 14 days)</h3>
+            <button class="btn ghost sm" id="btnViewCal">View calendar</button>
+          </div>
+          <div class="list" id="list-upcoming"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <h3>Recent Activity</h3>
+            <button class="btn ghost sm" id="btnSeeAllActivity">See all</button>
+          </div>
+          <table class="table table-left" id="table-activity">
+            <thead>
+              <tr><th>When</th><th>Activity</th><th>By</th></tr>
+            </thead>
+            <tbody><tr><td colspan="3" style="color:var(--muted)">No recent activity found.</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- CASES -->
+      <section class="page" id="page-cases" hidden>
+        <div class="card empty"><h3>Cases</h3><p>Cases list placeholder.</p></div>
+      </section>
+
+      <!-- CALENDAR -->
+      <section class="page" id="page-schedules" hidden>
+        <div class="card empty"><h3>Schedules</h3><p>Calendar placeholder.</p></div>
+      </section>
+
+      <!-- PROFILES — ALL USERS -->
+      <section class="page" id="page-profiles" hidden>
+        <div class="card">
+          <div class="card-head">
+            <h3>Profiles • All Users</h3>
+            <button id="btnAddUser" class="btn sm">Add User</button>
+          </div>
+          <table class="table" id="tbl-users">
+            <thead>
+              <tr><th>Full name</th><th>Email</th><th>Role</th><th>Status</th><th>Actions</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Add User dialog -->
+      <dialog id="dlgAddUser" class="modal">
+        <form id="formAddUser" method="dialog">
+          <h4>Add New User</h4>
+          <div class="grid2">
+            <label>Full name <input type="text" id="au_name" required></label>
+            <label>Email <input type="email" id="au_email" required></label>
+          </div>
+          <div class="grid2">
+            <label>Role
+              <select id="au_role">
+                <option value="employee">Employee (Lawyer)</option>
+                <option value="client">Client</option>
+                <option value="admin">Admin</option>
+              </select>
+            </label>
+            <div></div>
+          </div>
+          <div id="row_specialization" hidden>
+            <label>Specialization
+              <select id="au_specialization">
+                <option value="">— select specialization —</option>
+                <option>Family Law</option><option>Immigration</option><option>Insurance Law</option>
+                <option>Criminal Case</option><option>Litigation</option><option>Labor and Employment</option>
+                <option>Civil</option><option>Corporate</option>
+              </select>
+            </label>
+          </div>
+          <label>Password <input type="password" id="au_password" minlength="6" required></label>
+          <div class="actions">
+            <button type="button" class="btn ghost" id="au_cancel">Cancel</button>
+            <button type="submit" class="btn">Save User</button>
+          </div>
+        </form>
+      </dialog>
+
+      <!-- Edit User dialog -->
+      <dialog id="dlgEditUser" class="modal">
+        <form id="formEditUser" method="dialog">
+          <h4>Edit User</h4>
+          <input type="hidden" id="eu_id">
+          <div class="grid2">
+            <label>Full name <input id="eu_name" required></label>
+            <label>Email <input id="eu_email" type="email" required></label>
+          </div>
+          <div class="grid2">
+            <label>Role
+              <select id="eu_role">
+                <option value="admin">Admin</option>
+                <option value="employee">Employee</option>
+                <option value="client">Client</option>
+              </select>
+            </label>
+            <label>Status
+              <select id="eu_status">
+                <option value="active">active</option>
+                <option value="disabled">disabled</option>
+              </select>
+            </label>
+          </div>
+          <div id="eu_row_specialization" hidden>
+            <label>Specialization
+              <select id="eu_specialization">
+                <option value="">—</option>
+                <option>Family Law</option><option>Immigration</option><option>Insurance Law</option>
+                <option>Criminal Case</option><option>Litigation</option><option>Labor and Employment</option>
+                <option>Civil</option><option>Corporate</option>
+              </select>
+            </label>
+          </div>
+          <div class="actions">
+            <button type="button" class="btn ghost" id="eu_cancel">Cancel</button>
+            <button type="submit" class="btn">Save Changes</button>
+          </div>
+        </form>
+      </dialog>
+
+      <!-- PROFILES — LAWYERS -->
+      <section class="page" id="page-profiles-lawyers" hidden>
+        <div class="card">
+          <div class="card-head"><h3>Profiles • Lawyers</h3></div>
+          <table class="table" id="tbl-lawyers">
+            <thead><tr><th>Full name</th><th>Email</th><th>Role</th><th>Specialization</th><th>Status</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- PROFILES — CLIENTS -->
+      <section class="page" id="page-profiles-clients" hidden>
+        <div class="card">
+          <div class="card-head"><h3>Profiles • Clients</h3></div>
+          <table class="table" id="tbl-clients">
+            <thead><tr><th>Full name</th><th>Email</th><th>Role</th><th>Status</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- PROFILES — ARCHIVED -->
+      <section class="page" id="page-profiles-archived" hidden>
+        <div class="card">
+          <div class="card-head"><h3>Profiles • Archived</h3></div>
+          <table class="table" id="tbl-archived">
+            <thead><tr><th>Full name</th><th>Email</th><th>Role</th><th>Specialization</th><th>Archived</th><th>Actions</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- APPOINTMENTS (client) -->
+<section class="page" id="page-appointments" hidden>
+  <!-- Book new appointment -->
+  <div class="card">
+    <div class="card-head">
+      <h3>Book an Appointment</h3>
+    </div>
+
+    <form id="bookForm" class="grid2" style="gap:12px">
+      <label>
+        Practice Area
+        <select id="apt_practice" required>
+          <option value="" disabled selected>— select —</option>
+          <option>Family Law</option>
+          <option>Immigration</option>
+          <option>Insurance Law</option>
+          <option>Criminal Case</option>
+          <option>Litigation</option>
+          <option>Labor and Employment</option>
+          <option>Civil</option>
+          <option>Corporate</option>
+        </select>
+      </label>
+
+      <label>
+        Preferred Date
+        <input id="apt_date" type="date" required>
+      </label>
+
+      <label>
+        Preferred Time
+        <input id="apt_time" type="time" required>
+      </label>
+
+      <label>
+        Appointment Type
+        <select id="apt_type" required>
+          <option>In-Office</option>
+          <option>Schedule a Online Meet</option>
+        </select>
+      </label>
+
+      <label class="span2">
+        Details
+        <textarea id="apt_details" rows="3" placeholder="Describe the other details"></textarea>
+      </label>
+
+      <div class="actions span2">
+        <button type="submit" class="btn">Book Appointment</button>
+        <span id="apt_msg" style="margin-left:8px;color:var(--muted)"></span>
+        <span style="margin-left:12px;color:var(--muted);font-size:12px;">(Max 3 per user • 30/day)</span>
+      </div>
+    </form>
+  </div>
+
+  <!-- My appointments list -->
+  <div class="card">
+    <div class="card-head"><h3>My Appointments</h3></div>
+    <table class="table" id="tbl-client-appts">
+      <thead>
+        <tr>
+          <th>When</th>
+          <th>Title</th>
+          <th>Practice</th>
+          <th>Type</th>
+          <th>Status</th>
+          <th>Details</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <!-- (Optional) keep original table for backward compatibility -->
+  <div class="card" hidden>
+    <div class="card-head"><h3>Appointments (legacy)</h3></div>
+    <table class="table" id="tbl-appointments">
+      <thead><tr><th>Title</th><th>When</th><th>Location</th><th>Type</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</section>
+
+<dialog id="dlgAptReview" class="modal">
+  <form method="dialog" class="modal-card" id="aptReviewForm">
+    <header class="modal-header">
+      <h3>Review Appointment</h3>
+      <button type="button" class="modal-close" aria-label="Close" onclick="this.closest('dialog').close()">×</button>
+    </header>
+
+    <section class="grid-2">
+      <label class="field">
+        <span>Client</span>
+        <input id="rv_client" type="text" readonly>
+      </label>
+      <label class="field">
+        <span>Date &amp; Time</span>
+        <input id="rv_when" type="text" readonly>
+      </label>
+
+      <label class="field">
+        <span>Practice Area</span>
+        <input id="rv_practice" type="text" readonly>
+      </label>
+      <label class="field">
+        <span>Type</span>
+        <input id="rv_type" type="text" readonly>
+      </label>
+    </section>
+
+    <label class="field">
+      <span>Details</span>
+      <textarea id="rv_details" rows="4" readonly></textarea>
+    </label>
+
+    <hr class="muted" />
+
+    <section>
+      <label class="field">
+        <span>Assign to Attorney (optional)</span>
+        <select id="rv_attorney"></select>
+      </label>
+      <div id="rv_attorney_help" class="help-text"></div>
+    </section>
+
+    <footer class="modal-footer">
+      <button type="button" id="btnDeclineAppt" class="btn btn-danger">Reject</button>
+      <span class="flex-1"></span>
+      <button type="button" id="btnAcceptAppt" class="btn btn-primary">Accept</button>
+    </footer>
+
+    <!-- hidden ids -->
+    <input type="hidden" id="rv_id">
+  </form>
+</dialog>
+
+
+
+      <!-- ROLE & PERMISSIONS -->
+      <section class="page" id="page-roles" hidden>
+        <div class="card empty"><h3>Role &amp; Permissions</h3><p>RBAC settings placeholder.</p></div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- App logic -->
+  <script src="app-dark.js?v=55"></script>
+</body>
+</html>

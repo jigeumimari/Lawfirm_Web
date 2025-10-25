@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Login | Talampas & Associates</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin> 
+  <!-- Serif for the title + Inter for UI text -->
+<link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+
+  <!-- Either reuse your full styles.css or the small subset above -->
+  <link rel="stylesheet" href="styles.css?v=10">
+  <!-- or: <link rel="stylesheet" href="login.css"> -->
+</head>
+<body>
+  <main id="loginView" class="view">
+    <section class="auth-card" aria-labelledby="loginTitle">
+      <div class="brand">
+        <img class="logo" src="/auth/logotp.jpg" alt="Talampas & Associates">
+        <div>
+          <h1 id="loginTitle">The Law Firm of Talampas &amp; Associates</h1>
+          <p class="subtitle">Your legal partner. Responsive and Dependable.</p>
+        </div>
+      </div>
+
+      <form id="loginForm" class="form" autocomplete="off">
+        <label><span>Email</span><input type="email" id="email" autocomplete="username" required /></label>
+        <label><span>Password</span><input type="password" id="password" autocomplete="current-password" required /></label>
+        <button class="btn primary" type="submit">Log in</button>
+        <div class="hint" style="margin-top:8px"><button type="button" id="forgotBtn" class="linklike">Forgot Password</button></div>
+      </form>
+
+      <dialog id="forgotDialog" class="dialog" aria-labelledby="forgotTitle">
+        <form id="forgotForm" method="dialog" class="form">
+          <h3 id="forgotTitle">Reset Password</h3>
+          <p class="small" style="margin-top:-6px">Enter the account email and set a new password.</p>
+          <label><span>Email</span><input type="email" id="fpEmail" autocomplete="username" required /></label>
+          <label><span>New Password</span><input type="password" id="fpNew" autocomplete="new-password" minlength="6" required /></label>
+          <div class="actions">
+            <button type="button" class="btn ghost" id="fpCancelBtn">Cancel</button>
+            <button class="btn primary" type="submit">Save New Password</button>
+          </div>
+        </form>
+      </dialog>
+    </section>
+  </main>
+  
+
+  <!-- Login-only JS from above -->
+  <!-- (You can also reuse your full script.js if you prefer the same bundle) -->
+  <!-- <script defer src="script.js?v=8"></script> -->
+  <!-- or inline the trimmed login JS: -->
+  <!-- paste the JS block from Section 2 here -->
+ <script>
+const API = (p) => `${location.origin}/api/${p}`;
+
+async function postJSONorForm(url, payload) {
+  // 1) Try FormData (PHP $_POST)
+  try {
+    const fd = new FormData();
+    for (const [k, v] of Object.entries(payload)) fd.append(k, v);
+    let res = await fetch(url, { method:'POST', body: fd, credentials:'include' });
+    let out = await res.json().catch(()=> ({}));
+    if (res.ok && (out.ok || out.user)) return out;
+    // If server explicitly says it wants JSON or gives structured error, fall through
+  } catch {}
+
+  // 2) Fallback to JSON (php://input)
+  const res = await fetch(url, {
+    method:'POST',
+    credentials:'include',
+    headers:{ 'Content-Type':'application/json' },
+    body: JSON.stringify(payload)
+  });
+  let out = {};
+  try { out = await res.json(); } catch {}
+  if (!res.ok || out?.error) throw new Error(out?.error || `HTTP ${res.status}`);
+  return out;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const $ = (s,c=document)=>c.querySelector(s);
+
+  $('#loginForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = $('#email')?.value?.trim().toLowerCase();
+    const password = $('#password')?.value || '';
+    if (!email || !password) return alert('Enter email and password');
+
+    try {
+      const out = await postJSONorForm(API('login.php'), { email, password });
+      console.log('login.php response:', out);       // <-- shows server-side reason if any
+      if (!(out?.ok)) throw new Error(out?.error || 'Invalid credentials');
+
+      sessionStorage.setItem('ta_session', JSON.stringify(out.user || {}));
+      location.href = '/app.html';
+    } catch (err) {
+      console.error('Login error:', err);
+      alert(err.message || 'Login failed');
+    }
+  });
+});
+
+async function postJSON(url, payload){
+  const res = await fetch(url, {
+    method:'POST', credentials:'include',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(payload)
+  });
+  let out; 
+  try { out = await res.json(); } catch { 
+    const txt = await res.text();
+    throw new Error(`HTTP ${res.status} – ${txt.slice(0,200)}`);
+  }
+  if (!res.ok || out?.error) throw new Error(out?.error || `HTTP ${res.status}`);
+  return out;
+}
+
+</script>
+
+
+
+</body>
+</html>

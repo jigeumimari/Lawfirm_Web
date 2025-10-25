@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Book an Appointment • Talampas & Associates</title>
+  <link rel="stylesheet" href="appoint.css">
+</head>
+<body class="theme-dark">
+  <header class="topbar">
+    <h1>Book an Appointment</h1>
+    <div id="signedAs" class="signed-as">Signed in as —</div>
+  </header>
+
+  <main class="container">
+    <section class="card">
+      <h2 class="card-title">New Appointment</h2>
+      <form id="bookForm" class="grid">
+        <div class="field">
+          <label for="title">Title</label>
+          <select id="title" required>
+            <option value="In-Office">In-Office</option>
+            <option value="Online Meet">Online Meet</option>
+            <option value="Phone Call">Phone Call</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="practice_area">Practice Area</label>
+          <select id="practice_area" required>
+            <option value="" disabled selected>Select an area</option>
+            <option>Family Law</option>
+            <option>Immigration</option>
+            <option>Insurance Law</option>
+            <option>Criminal Case</option>
+            <option>Litigation</option>
+            <option>Labor and Employment</option>
+            <option>Civil</option>
+            <option>Corporate</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="preferred_date">Preferred Date</label>
+          <input id="preferred_date" type="date" required>
+        </div>
+
+        <div class="field">
+          <label for="preferred_time">Preferred Time</label>
+          <input id="preferred_time" type="time" required>
+        </div>
+
+        <div class="field">
+          <label for="appointment_type">Appointment Type</label>
+          <select id="appointment_type" required>
+            <option>In-Office</option>
+            <option>Online Meet</option>
+            <option>Phone Call</option>
+          </select>
+        </div>
+
+        <div class="field span-2">
+          <label for="details">Details / Contact</label>
+          <textarea id="details" placeholder="Phone: +63 ..." rows="3"></textarea>
+        </div>
+
+        <div class="actions">
+          <button type="submit" class="btn">Book Appointment</button>
+          <span id="msg" class="msg" role="status" aria-live="polite"></span>
+        </div>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2 class="card-title">My Appointments</h2>
+      <table class="table" id="tbl">
+        <thead>
+          <tr>
+            <th>When</th>
+            <th>Title</th>
+            <th>Practice</th>
+            <th>Type</th>
+            <th>Status</th>
+            <th>Details</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+  </main>
+
+  <script src="appoint.js"></script>
+</body>
+</html>

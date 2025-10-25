@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Chat — Talampas & Associates</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="chat.css?v=1">
+</head>
+<body>
+
+  <div class="chat-app">
+
+    <!-- LEFT: contacts / threads -->
+    <aside class="chat-sidebar">
+      <div class="search">
+        <input id="searchInput" type="text" placeholder="Search contacts...">
+      </div>
+      <ul id="threadList" class="thread-list"><!-- filled by JS --></ul>
+    </aside>
+
+    <!-- RIGHT: conversation area -->
+    <section class="chat-main">
+
+      <!-- conversation header -->
+      <header class="conv-header">
+        <div class="conv-peer">
+          <img id="peerAvatar" class="avatar" src="" alt="" onerror="this.style.display='none'">
+          <div class="meta">
+            <div id="peerName" class="name">—</div>
+            <div id="peerPresence" class="presence">Offline</div>
+          </div>
+        </div>
+
+        <div class="conv-actions">
+          <button class="icon-btn" title="New chat" id="btnNewChat">
+            <svg viewBox="0 0 24 24" class="ic"><path fill="currentColor" d="M11 4h2v16h-2zM4 11h16v2H4z"/></svg>
+          </button>
+          <button class="icon-btn" title="Call" id="btnCall">
+            <svg viewBox="0 0 24 24" class="ic"><path fill="currentColor" d="M6.6 10.8a15.5 15.5 0 006.6 6.6l2.2-2.2c.3-.3.8-.4 1.2-.3 1 .3 2.1.5 3.2.5.7 0 1.2.5 1.2 1.2V20c0 .7-.5 1.2-1.2 1.2C9.8 21.2 2.8 14.2 2.8 5.2 2.8 4.5 3.3 4 4 4h3.4c.7 0 1.2.5 1.2 1.2 0 1.1.2 2.2.5 3.2.1.4 0 .8-.3 1.2l-2.2 2.2z"/></svg>
+          </button>
+          <button class="icon-btn" title="More">
+            <svg viewBox="0 0 24 24" class="ic"><path fill="currentColor" d="M6 10a2 2 0 100 4 2 2 0 000-4zm6 0a2 2 0 100 4 2 2 0 000-4zm6 0a2 2 0 100 4 2 2 0 000-4z"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- messages -->
+      <div id="messageScroll" class="messages"><!-- filled by JS --></div>
+
+      <!-- composer -->
+      <footer class="composer">
+        <form id="sendForm" class="send-row" autocomplete="off">
+          <input id="msgInput" type="text" placeholder="Say something..." required>
+          <button id="sendBtn" class="send-btn" title="Send">
+            <svg viewBox="0 0 24 24" class="ic"><path fill="currentColor" d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
+          </button>
+        </form>
+      </footer>
+
+    </section>
+  </div>
+
+  <script src="chat.js?v=1"></script>
+</body>
+</html>
